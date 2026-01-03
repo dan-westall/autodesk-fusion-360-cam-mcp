@@ -32,6 +32,20 @@ class Task:
     timestamp: float
     module_context: str
     callback: Optional[Callable] = None
+    
+    def __lt__(self, other: "Task") -> bool:
+        """Compare tasks for PriorityQueue ordering.
+        
+        Higher priority (lower enum value after inversion) comes first.
+        For same priority, earlier timestamp comes first.
+        """
+        if not isinstance(other, Task):
+            return NotImplemented
+        # Priority is already inverted in queue_task (4 - priority.value)
+        # So we compare by (priority_value, timestamp) tuple
+        self_key = (4 - self.priority.value, self.timestamp)
+        other_key = (4 - other.priority.value, other.timestamp)
+        return self_key < other_key
 
 class TaskQueue:
     """

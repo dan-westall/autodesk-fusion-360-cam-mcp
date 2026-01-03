@@ -135,45 +135,49 @@ def draw_ellipis(design, ui, x_center, y_center, z_center,
 
 def draw_2d_rect(design, ui, x_1, y_1, z_1, x_2, y_2, z_2, plane="XY"):
     """Draw a 2D rectangle on the specified plane"""
-    rootComp = design.rootComponent
-    sketches = rootComp.sketches
-    planes = rootComp.constructionPlanes
+    try:
+        rootComp = design.rootComponent
+        sketches = rootComp.sketches
+        planes = rootComp.constructionPlanes
 
-    if plane == "XZ":
-        baseplane = rootComp.xZConstructionPlane
-        if y_1 and y_2 != 0:
-            planeInput = planes.createInput()
-            offsetValue = adsk.core.ValueInput.createByReal(y_1)
-            planeInput.setByOffset(baseplane, offsetValue)
-            offsetPlane = planes.add(planeInput)
-            sketch = sketches.add(offsetPlane)
+        if plane == "XZ":
+            baseplane = rootComp.xZConstructionPlane
+            if (y_1 != 0) or (y_2 != 0):
+                planeInput = planes.createInput()
+                offsetValue = adsk.core.ValueInput.createByReal(y_1)
+                planeInput.setByOffset(baseplane, offsetValue)
+                offsetPlane = planes.add(planeInput)
+                sketch = sketches.add(offsetPlane)
+            else:
+                sketch = sketches.add(baseplane)
+        elif plane == "YZ":
+            baseplane = rootComp.yZConstructionPlane
+            if (x_1 != 0) or (x_2 != 0):
+                planeInput = planes.createInput()
+                offsetValue = adsk.core.ValueInput.createByReal(x_1)
+                planeInput.setByOffset(baseplane, offsetValue)
+                offsetPlane = planes.add(planeInput)
+                sketch = sketches.add(offsetPlane)
+            else:
+                sketch = sketches.add(baseplane)
         else:
-            sketch = sketches.add(baseplane)
-    elif plane == "YZ":
-        baseplane = rootComp.yZConstructionPlane
-        if x_1 and x_2 != 0:
-            planeInput = planes.createInput()
-            offsetValue = adsk.core.ValueInput.createByReal(x_1)
-            planeInput.setByOffset(baseplane, offsetValue)
-            offsetPlane = planes.add(planeInput)
-            sketch = sketches.add(offsetPlane)
-        else:
-            sketch = sketches.add(baseplane)
-    else:
-        baseplane = rootComp.xYConstructionPlane
-        if z_1 and z_2 != 0:
-            planeInput = planes.createInput()
-            offsetValue = adsk.core.ValueInput.createByReal(z_1)
-            planeInput.setByOffset(baseplane, offsetValue)
-            offsetPlane = planes.add(planeInput)
-            sketch = sketches.add(offsetPlane)
-        else:
-            sketch = sketches.add(baseplane)
+            baseplane = rootComp.xYConstructionPlane
+            if (z_1 != 0) or (z_2 != 0):
+                planeInput = planes.createInput()
+                offsetValue = adsk.core.ValueInput.createByReal(z_1)
+                planeInput.setByOffset(baseplane, offsetValue)
+                offsetPlane = planes.add(planeInput)
+                sketch = sketches.add(offsetPlane)
+            else:
+                sketch = sketches.add(baseplane)
 
-    rectangles = sketch.sketchCurves.sketchLines
-    point_1 = adsk.core.Point3D.create(x_1, y_1, z_1)
-    points_2 = adsk.core.Point3D.create(x_2, y_2, z_2)
-    rectangles.addTwoPointRectangle(point_1, points_2)
+        rectangles = sketch.sketchCurves.sketchLines
+        point_1 = adsk.core.Point3D.create(x_1, y_1, z_1)
+        points_2 = adsk.core.Point3D.create(x_2, y_2, z_2)
+        rectangles.addTwoPointRectangle(point_1, points_2)
+    except:
+        if ui:
+            ui.messageBox('Failed draw_2d_rect:\n{}'.format(traceback.format_exc()))
 
 
 def draw_circle(design, ui, radius, x, y, z, plane="XY"):

@@ -367,7 +367,7 @@ class ModuleLoader:
                 if self.load_module(module_name):
                     loaded_count += 1
         
-        logger.info(f"Loaded {loaded_count} modules in category: {category}")
+        module_logger.info(f"Loaded {loaded_count} modules in category: {category}")
         return loaded_count
     
     def load_all_modules(self) -> int:

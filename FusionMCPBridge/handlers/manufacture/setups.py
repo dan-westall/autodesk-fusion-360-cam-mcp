@@ -366,8 +366,7 @@ def get_setup_by_id_impl(setup_id: str) -> dict:
         }
 
 
-def create_setup_impl(name: str = None, stock_config: dict = None, 
-                      wcs_config: dict = None, model_id: str = None) -> dict:
+def create_setup_impl(name: str = None, model_id: str = None) -> dict:
     """
     Create a new CAM setup with specified configuration.
     """
@@ -531,9 +530,9 @@ def handle_create_setup(path: str, method: str, data: Dict[str, Any]) -> Dict[st
     """Create a new CAM setup with specified configuration."""
     try:
         name = data.get("name")
-        stock_config = data.get("stock_config", {})
-        wcs_config = data.get("wcs_config", {})
         model_id = data.get("model_id")
+        # Note: stock_config and wcs_config are accepted but not yet implemented
+        # They are reserved for future implementation
         
         result = {}
         
@@ -542,8 +541,6 @@ def handle_create_setup(path: str, method: str, data: Dict[str, Any]) -> Dict[st
             try:
                 result = create_setup_impl(
                     name=name,
-                    stock_config=stock_config,
-                    wcs_config=wcs_config,
                     model_id=model_id
                 )
             except Exception as e:

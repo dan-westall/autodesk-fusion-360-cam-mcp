@@ -329,6 +329,7 @@ def handle_get_tool_usage(path: str, method: str, data: Dict[str, Any]) -> Dict[
                     setup = setups.item(setup_idx)
                     setup_id = setup.entityToken if hasattr(setup, 'entityToken') else f"setup_{setup_idx}"
                     
+                    # Check operations directly under setup
                     operations = setup.operations
                     if operations:
                         for op_idx in range(operations.count):
@@ -342,6 +343,24 @@ def handle_get_tool_usage(path: str, method: str, data: Dict[str, Any]) -> Dict[
                                     "setup_name": setup.name,
                                     "setup_id": setup_id
                                 })
+                    
+                    # Also check operations inside folders
+                    if hasattr(setup, 'folders') and setup.folders:
+                        for folder_idx in range(setup.folders.count):
+                            folder = setup.folders.item(folder_idx)
+                            if hasattr(folder, 'operations') and folder.operations:
+                                for op_idx in range(folder.operations.count):
+                                    operation = folder.operations.item(op_idx)
+                                    tool_data = _get_tool_data_from_operation(operation)
+                                    if tool_data.get("id") == tool_id:
+                                        tool_usage["operations"].append({
+                                            "operation_id": operation.entityToken if hasattr(operation, 'entityToken') else f"op_f{folder_idx}_{op_idx}",
+                                            "operation_name": operation.name,
+                                            "operation_type": get_operation_type(operation),
+                                            "setup_name": setup.name,
+                                            "setup_id": setup_id,
+                                            "folder": folder.name
+                                        })
             
             tool_usage["total_operations"] = len(tool_usage["operations"])
             result = tool_usage

@@ -461,14 +461,20 @@ def handle_validate_height_values(path: str, method: str, data: Dict[str, Any]) 
                 retract = height_values.get("retract_height")
                 feed = height_values.get("feed_height")
                 
-                if clearance and retract and clearance <= retract:
+                # Only compare if both values are numeric (not string expressions)
+                if (clearance is not None and retract is not None and 
+                    isinstance(clearance, (int, float)) and isinstance(retract, (int, float)) and
+                    clearance <= retract):
                     validation_results["issues"].append({
                         "parameter": "clearance_height",
                         "issue": "Clearance height should be greater than retract height",
                         "severity": "warning"
                     })
                 
-                if retract and feed and retract <= feed:
+                # Only compare if both values are numeric (not string expressions)
+                if (retract is not None and feed is not None and
+                    isinstance(retract, (int, float)) and isinstance(feed, (int, float)) and
+                    retract <= feed):
                     validation_results["issues"].append({
                         "parameter": "retract_height",
                         "issue": "Retract height should be greater than feed height",

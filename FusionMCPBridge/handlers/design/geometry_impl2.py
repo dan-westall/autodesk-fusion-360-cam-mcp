@@ -337,7 +337,7 @@ def export_as_STEP(design, ui, Name):
     try:
         exportMgr = design.exportManager
         directory_name = "Fusion_Exports"
-        FilePath = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+        FilePath = os.path.join(os.path.expanduser('~'), 'Desktop')
         Export_dir_path = os.path.join(FilePath, directory_name, Name)
         os.makedirs(Export_dir_path, exist_ok=True)
         
@@ -417,7 +417,7 @@ def export_as_STL(design, ui, Name):
         stlRootOptions = exportMgr.createSTLExportOptions(rootComp)
         
         directory_name = "Fusion_Exports"
-        FilePath = os.path.join(os.path.join(os.environ['USERPROFILE']), 'Desktop')
+        FilePath = os.path.join(os.path.expanduser('~'), 'Desktop')
         Export_dir_path = os.path.join(FilePath, directory_name, Name)
         os.makedirs(Export_dir_path, exist_ok=True)
 

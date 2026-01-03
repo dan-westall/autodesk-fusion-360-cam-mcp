@@ -98,7 +98,15 @@ def handle_circular_pattern(path: str, method: str, data: Dict[str, Any]) -> Dic
     # Import here to avoid circular imports
     from ... import FusionMCPBridge
     
-    quantity = float(data.get('quantity'))
+    quantity_raw = data.get('quantity')
+    if quantity_raw is None:
+        return {
+            "status": 400,
+            "error": True,
+            "message": "quantity parameter is required",
+            "headers": {"Content-Type": "application/json"}
+        }
+    quantity = float(quantity_raw)
     axis = str(data.get('axis', "X"))
     plane = str(data.get('plane', 'XY'))  # 'XY', 'XZ', 'YZ'
     

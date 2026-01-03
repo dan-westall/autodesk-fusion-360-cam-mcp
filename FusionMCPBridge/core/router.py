@@ -327,7 +327,7 @@ class RequestRouter:
             try:
                 return self.error_handlers[status_code](status_code, message)
             except Exception as e:
-                logger.error(f"Error handler failed: {str(e)}")
+                module_logger.error(f"Error handler failed: {str(e)}")
         
         # Default error response
         return {

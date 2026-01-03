@@ -54,6 +54,17 @@ class ErrorResponse:
     details: Optional[Dict[str, Any]] = None
     recovery_suggestions: Optional[List[str]] = None
 
+class ModuleLoggerAdapter(logging.LoggerAdapter):
+    """LoggerAdapter that adds module context to log records without global state."""
+    
+    def process(self, msg, kwargs):
+        """Add module_name to the extra dict for each log message."""
+        extra = kwargs.get('extra', {})
+        extra['module_name'] = self.extra.get('module_name', 'unknown')
+        kwargs['extra'] = extra
+        return msg, kwargs
+
+
 class ModuleLogger:
     """Module-specific logger with configurable levels and context"""
     
@@ -66,8 +77,8 @@ class ModuleLogger:
             base_level: Base logging level
         """
         self.module_name = module_name
-        self.logger = logging.getLogger(f"fusion_mcp.{module_name}")
-        self.logger.setLevel(base_level)
+        base_logger = logging.getLogger(f"fusion_mcp.{module_name}")
+        base_logger.setLevel(base_level)
         
         # Create formatter with module context
         formatter = logging.Formatter(
@@ -75,18 +86,13 @@ class ModuleLogger:
         )
         
         # Add console handler if not already present
-        if not self.logger.handlers:
+        if not base_logger.handlers:
             handler = logging.StreamHandler()
             handler.setFormatter(formatter)
-            self.logger.addHandler(handler)
+            base_logger.addHandler(handler)
         
-        # Add module name to all log records
-        old_factory = logging.getLogRecordFactory()
-        def record_factory(*args, **kwargs):
-            record = old_factory(*args, **kwargs)
-            record.module_name = self.module_name
-            return record
-        logging.setLogRecordFactory(record_factory)
+        # Use LoggerAdapter instead of global LogRecordFactory modification
+        self.logger = ModuleLoggerAdapter(base_logger, {'module_name': module_name})
     
     def debug(self, message: str, **kwargs):
         """Log debug message with context"""
@@ -110,7 +116,7 @@ class ModuleLogger:
     
     def set_level(self, level: int):
         """Set logging level for this module"""
-        self.logger.setLevel(level)
+        self.logger.logger.setLevel(level)
 
 class ErrorHandler:
     """
