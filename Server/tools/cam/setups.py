@@ -32,6 +32,16 @@ def register_tools(mcp_instance: FastMCP):
     mcp.tool()(modify_setup_configuration)
     mcp.tool()(delete_cam_setup)
     mcp.tool()(duplicate_cam_setup)
+    
+    # Setup-Toolpath Integration Tools (Task 10.6)
+    mcp.tool()(get_setup_toolpaths)
+    mcp.tool()(find_toolpath_setup)
+    mcp.tool()(validate_setup_toolpath_relationship)
+    mcp.tool()(get_setup_toolpath_mapping)
+    
+    # Part Position Tools (Task 14.4)
+    mcp.tool()(get_part_position)
+    mcp.tool()(set_part_position)
 
 def create_cam_setup(name: str = None, stock_mode: str = "auto", wcs_config: dict = None, model_id: str = None) -> dict:
     """
@@ -177,7 +187,7 @@ def list_cam_setups(include_toolpaths: bool = True) -> dict:
     try:
         endpoint = get_endpoints("cam")["cam_setups"]
         params = {"include_toolpaths": include_toolpaths}
-        return send_get_request(endpoint, params=params)
+        return send_get_request(endpoint, params)
     except Exception as e:
         logging.error("List CAM setups failed: %s", e)
         return {
@@ -444,4 +454,468 @@ def duplicate_cam_setup(setup_id: str, new_name: str = None) -> dict:
             "error": True,
             "message": f"Failed to duplicate CAM setup: {str(e)}",
             "code": "SETUP_DUPLICATION_FAILED"
+        }
+
+
+# =============================================================================
+# Setup-Toolpath Integration Tools (Task 10.6)
+# =============================================================================
+
+def get_setup_toolpaths(setup_id: str, include_details: bool = True) -> dict:
+    """
+    Get all toolpaths within a specific CAM setup.
+    
+    This tool retrieves all toolpath operations contained within a setup,
+    providing bidirectional setup-toolpath relationship queries. Each toolpath
+    includes setup context information as required for proper CAM workflow management.
+    
+    Args:
+        setup_id: Unique identifier of the setup to query
+        include_details: Whether to include full toolpath details including tool
+                        information. Default is True.
+    
+    Returns:
+        dict: Toolpaths within the setup with setup context
+              Success response includes:
+              - setup_id: Setup identifier
+              - setup_name: Setup name
+              - toolpaths: Array of toolpath objects with:
+                - id: Toolpath identifier
+                - name: Toolpath name
+                - type: Operation type (adaptive, pocket, contour, etc.)
+                - is_valid: Validity status
+                - setup_id: Parent setup ID (always included)
+                - setup_name: Parent setup name
+                - tool: Tool information (if include_details=True)
+                - folder: Folder name if toolpath is in a folder
+              - total_count: Number of toolpaths in the setup
+              - message: Status message
+              
+              Error response includes:
+              - error: True
+              - message: Human-readable error description
+              - code: Error code (SETUP_NOT_FOUND, etc.)
+    
+    Example usage:
+        # Get all toolpaths with full details
+        get_setup_toolpaths("setup_001")
+        
+        # Get toolpaths without tool details (faster)
+        get_setup_toolpaths("setup_001", include_details=False)
+    
+    Example response:
+        {
+            "setup_id": "setup_001",
+            "setup_name": "Roughing Setup",
+            "toolpaths": [
+                {
+                    "id": "op_001",
+                    "name": "Adaptive Clearing",
+                    "type": "adaptive",
+                    "is_valid": true,
+                    "setup_id": "setup_001",
+                    "setup_name": "Roughing Setup",
+                    "tool": {
+                        "id": "tool_001",
+                        "name": "6mm Flat Endmill",
+                        "type": "flat end mill"
+                    }
+                }
+            ],
+            "total_count": 1,
+            "message": "Found 1 toolpath(s) in setup 'Roughing Setup'"
+        }
+    
+    Typical use cases:
+    - Getting all operations within a specific setup
+    - Understanding setup organization
+    - Validating setup-toolpath relationships
+    
+    Requirements: 9.1, 9.2, 10.1, 10.2, 10.3, 11.1, 11.3
+    """
+    try:
+        endpoint = f"{get_endpoints('cam')['cam_setup_toolpaths']}/{setup_id}/toolpaths"
+        params = {"include_details": include_details}
+        return send_get_request(endpoint, params)
+    except Exception as e:
+        logging.error("Get setup toolpaths failed: %s", e)
+        return {
+            "error": True,
+            "message": f"Failed to get setup toolpaths: {str(e)}",
+            "code": "SETUP_TOOLPATHS_FAILED"
+        }
+
+
+def find_toolpath_setup(toolpath_id: str) -> dict:
+    """
+    Find which setup contains a specific toolpath.
+    
+    This tool provides bidirectional setup-toolpath relationship queries,
+    resolving the parent setup from a toolpath ID. Use this when you have
+    a toolpath ID and need to know which setup it belongs to.
+    
+    Args:
+        toolpath_id: Unique identifier of the toolpath to find
+    
+    Returns:
+        dict: Setup information for the toolpath
+              Success response includes:
+              - toolpath_id: The queried toolpath ID
+              - toolpath_name: Name of the toolpath
+              - toolpath_type: Operation type
+              - setup_id: Parent setup ID
+              - setup_name: Parent setup name
+              - folder: Folder name if toolpath is in a folder (null otherwise)
+              - message: Status message
+              
+              Error response includes:
+              - error: True
+              - message: Human-readable error description
+              - code: Error code (TOOLPATH_NOT_FOUND, etc.)
+    
+    Example usage:
+        find_toolpath_setup("op_001")
+    
+    Example response:
+        {
+            "toolpath_id": "op_001",
+            "toolpath_name": "Adaptive Clearing",
+            "toolpath_type": "adaptive",
+            "setup_id": "setup_001",
+            "setup_name": "Roughing Setup",
+            "folder": null,
+            "message": "Toolpath 'Adaptive Clearing' belongs to setup 'Roughing Setup'"
+        }
+    
+    Typical use cases:
+    - Finding the parent setup for a toolpath
+    - Validating toolpath context before operations
+    - Understanding CAM document structure
+    
+    Requirements: 9.1, 9.2, 9.3, 11.1, 11.2, 11.3
+    """
+    try:
+        endpoint = f"{get_endpoints('cam')['cam_toolpath_setup']}/{toolpath_id}/setup"
+        return send_get_request(endpoint)
+    except Exception as e:
+        logging.error("Find toolpath setup failed: %s", e)
+        return {
+            "error": True,
+            "message": f"Failed to find toolpath setup: {str(e)}",
+            "code": "TOOLPATH_SETUP_FAILED"
+        }
+
+
+def validate_setup_toolpath_relationship(setup_id: str, toolpath_id: str) -> dict:
+    """
+    Validate that a toolpath belongs to a specific setup.
+    
+    This tool validates setup context and permissions for toolpath operations.
+    Use this before performing operations that require a toolpath to be in
+    a specific setup, or to verify the relationship between setups and toolpaths.
+    
+    Args:
+        setup_id: Setup ID to validate against
+        toolpath_id: Toolpath ID to check
+    
+    Returns:
+        dict: Validation result
+              Valid relationship response:
+              - valid: True
+              - setup_id: The setup ID
+              - setup_name: Setup name
+              - toolpath_id: The toolpath ID
+              - toolpath_name: Toolpath name
+              - toolpath_type: Operation type
+              - folder: Folder name if applicable
+              - message: Confirmation message
+              
+              Invalid relationship response:
+              - valid: False
+              - message: Description of the mismatch
+              - code: TOOLPATH_SETUP_MISMATCH
+              - setup_id: The queried setup ID
+              - toolpath_id: The queried toolpath ID
+              - actual_setup_id: The setup where toolpath actually exists
+              - actual_setup_name: Name of the actual setup
+              
+              Error response includes:
+              - valid: False
+              - error: True
+              - message: Human-readable error description
+              - code: Error code
+    
+    Example usage:
+        validate_setup_toolpath_relationship("setup_001", "op_001")
+    
+    Example response (valid):
+        {
+            "valid": true,
+            "setup_id": "setup_001",
+            "setup_name": "Roughing Setup",
+            "toolpath_id": "op_001",
+            "toolpath_name": "Adaptive Clearing",
+            "toolpath_type": "adaptive",
+            "folder": null,
+            "message": "Toolpath 'Adaptive Clearing' is valid within setup 'Roughing Setup'"
+        }
+    
+    Example response (mismatch):
+        {
+            "valid": false,
+            "message": "Toolpath 'Contour Finishing' does not belong to setup 'Roughing Setup'. It belongs to setup 'Finishing Setup'",
+            "code": "TOOLPATH_SETUP_MISMATCH",
+            "setup_id": "setup_001",
+            "toolpath_id": "op_002",
+            "actual_setup_id": "setup_002",
+            "actual_setup_name": "Finishing Setup"
+        }
+    
+    Requirements: 9.3, 11.4, 11.5
+    """
+    try:
+        endpoint = f"{get_endpoints('cam')['cam_setup_toolpath_validate']}/{setup_id}/toolpaths/{toolpath_id}/validate"
+        return send_get_request(endpoint)
+    except Exception as e:
+        logging.error("Validate setup-toolpath relationship failed: %s", e)
+        return {
+            "error": True,
+            "message": f"Failed to validate setup-toolpath relationship: {str(e)}",
+            "code": "VALIDATION_FAILED"
+        }
+
+
+def get_setup_toolpath_mapping() -> dict:
+    """
+    Get comprehensive mapping of all setups to their toolpaths.
+    
+    This tool provides a complete bidirectional view of the setup-toolpath
+    relationships in the CAM document. Use this to understand the overall
+    structure of the CAM document and for validation purposes.
+    
+    Returns:
+        dict: Complete mapping with:
+              - setups: Array of setups with their toolpath IDs
+                - id: Setup identifier
+                - name: Setup name
+                - toolpath_ids: Array of toolpath IDs in this setup
+                - toolpath_count: Number of toolpaths
+              - toolpath_to_setup: Dictionary mapping toolpath IDs to setup info
+                - [toolpath_id]: {setup_id, setup_name, toolpath_name, folder}
+              - total_setups: Number of setups
+              - total_toolpaths: Total number of toolpaths
+              - message: Status message
+              
+              Error response includes:
+              - error: True
+              - message: Human-readable error description
+              - code: Error code
+    
+    Example usage:
+        get_setup_toolpath_mapping()
+    
+    Example response:
+        {
+            "setups": [
+                {
+                    "id": "setup_001",
+                    "name": "Roughing Setup",
+                    "toolpath_ids": ["op_001", "op_002"],
+                    "toolpath_count": 2
+                },
+                {
+                    "id": "setup_002",
+                    "name": "Finishing Setup",
+                    "toolpath_ids": ["op_003"],
+                    "toolpath_count": 1
+                }
+            ],
+            "toolpath_to_setup": {
+                "op_001": {"setup_id": "setup_001", "setup_name": "Roughing Setup", "toolpath_name": "Adaptive Clearing", "folder": null},
+                "op_002": {"setup_id": "setup_001", "setup_name": "Roughing Setup", "toolpath_name": "Pocket", "folder": null},
+                "op_003": {"setup_id": "setup_002", "setup_name": "Finishing Setup", "toolpath_name": "Contour", "folder": null}
+            },
+            "total_setups": 2,
+            "total_toolpaths": 3,
+            "message": "Mapped 3 toolpath(s) across 2 setup(s)"
+        }
+    
+    Typical use cases:
+    - Understanding CAM document structure
+    - Validating setup-toolpath relationships
+    - Building UI representations of CAM hierarchy
+    
+    Requirements: 11.1, 11.2, 11.3, 11.4
+    """
+    try:
+        endpoint = get_endpoints("cam")["cam_setup_toolpath_mapping"]
+        return send_get_request(endpoint)
+    except Exception as e:
+        logging.error("Get setup-toolpath mapping failed: %s", e)
+        return {
+            "error": True,
+            "message": f"Failed to get setup-toolpath mapping: {str(e)}",
+            "code": "MAPPING_FAILED"
+        }
+
+
+# =============================================================================
+# Part Position Tools (Task 14.4)
+# =============================================================================
+
+def get_part_position(setup_id: str) -> dict:
+    """
+    Get the part position configuration for a CAM setup.
+    
+    This tool retrieves the part position and orientation relative to the Work
+    Coordinate System (WCS) for a specific setup. Part position defines how the
+    part geometry is positioned within the setup's coordinate system.
+    
+    Args:
+        setup_id: Unique identifier of the setup to query. Must match exactly
+                 what was returned by list_cam_setups()
+    
+    Returns:
+        dict: Part position information
+              Success response includes:
+              - setup_id: Setup identifier
+              - setup_name: Setup name
+              - origin: Position coordinates {x, y, z} in centimeters
+              - orientation: Axis vectors {x_axis, y_axis, z_axis}
+              - is_default: Whether using default position (True if not modified)
+              - message: Status message
+              
+              Error response includes:
+              - error: True
+              - message: Human-readable error description
+              - code: Error code (SETUP_NOT_FOUND, CAM_NOT_AVAILABLE, etc.)
+    
+    Example usage:
+        get_part_position("setup_001")
+    
+    Example response:
+        {
+            "setup_id": "setup_001",
+            "setup_name": "Roughing Setup",
+            "origin": {"x": 0.0, "y": 0.0, "z": 0.0},
+            "orientation": {
+                "x_axis": [1.0, 0.0, 0.0],
+                "y_axis": [0.0, 1.0, 0.0],
+                "z_axis": [0.0, 0.0, 1.0]
+            },
+            "is_default": true,
+            "message": "Part position retrieved for setup 'Roughing Setup'"
+        }
+    
+    Typical use cases:
+    - Inspecting current part position before modification
+    - Verifying part alignment relative to WCS
+    - Understanding setup configuration for toolpath planning
+    
+    Requirements: 12.1, 12.4
+    """
+    try:
+        endpoint = f"{get_endpoints('cam')['cam_setup_part_position']}/{setup_id}/part-position"
+        return send_get_request(endpoint)
+    except Exception as e:
+        logging.error("Get part position failed: %s", e)
+        return {
+            "error": True,
+            "message": f"Failed to get part position: {str(e)}",
+            "code": "PART_POSITION_RETRIEVAL_FAILED"
+        }
+
+
+def set_part_position(setup_id: str, position: dict, orientation: dict = None) -> dict:
+    """
+    Set the part position and orientation relative to WCS for a CAM setup.
+    
+    This tool configures the part position within a setup's coordinate system.
+    Part position changes affect all toolpaths in the setup and may require
+    toolpath regeneration.
+    
+    Args:
+        setup_id: Unique identifier of the setup to modify
+        position: Position dictionary with x, y, z coordinates in centimeters.
+                 Example: {"x": 10.0, "y": 5.0, "z": 0.0}
+        orientation: Optional orientation dictionary with axis vectors.
+                    If not provided, current orientation is preserved.
+                    Example: {
+                        "x_axis": [1.0, 0.0, 0.0],
+                        "y_axis": [0.0, 1.0, 0.0]
+                    }
+                    Note: z_axis is calculated from cross product of x and y axes.
+    
+    Returns:
+        dict: Result of the position update
+              Success response includes:
+              - setup_id: Setup identifier
+              - setup_name: Setup name
+              - origin: Updated position coordinates {x, y, z}
+              - orientation: Updated axis vectors {x_axis, y_axis, z_axis}
+              - position_updated: Whether position was actually modified
+              - warnings: Array of warnings about impacts on operations
+              - requires_regeneration: Whether toolpaths need regeneration
+              - affected_operations: Number of operations affected
+              - message: Status message
+              
+              Error response includes:
+              - error: True
+              - message: Human-readable error description
+              - code: Error code (SETUP_NOT_FOUND, PART_POSITION_INVALID, etc.)
+              - validation_issues: Array of validation issues (if applicable)
+    
+    Example usage:
+        # Set position only
+        set_part_position("setup_001", {"x": 10.0, "y": 5.0, "z": 0.0})
+        
+        # Set position and orientation
+        set_part_position(
+            "setup_001",
+            {"x": 10.0, "y": 5.0, "z": 0.0},
+            {
+                "x_axis": [1.0, 0.0, 0.0],
+                "y_axis": [0.0, 1.0, 0.0]
+            }
+        )
+    
+    Example response:
+        {
+            "setup_id": "setup_001",
+            "setup_name": "Roughing Setup",
+            "origin": {"x": 10.0, "y": 5.0, "z": 0.0},
+            "orientation": {
+                "x_axis": [1.0, 0.0, 0.0],
+                "y_axis": [0.0, 1.0, 0.0],
+                "z_axis": [0.0, 0.0, 1.0]
+            },
+            "position_updated": true,
+            "warnings": ["Part position change will affect 3 existing operation(s). All toolpaths will need regeneration."],
+            "requires_regeneration": true,
+            "affected_operations": 3,
+            "message": "Part position updated for setup 'Roughing Setup'"
+        }
+    
+    Important notes:
+    - All position values are in centimeters (Fusion 360 internal units)
+    - Position changes affect all toolpaths in the setup
+    - Toolpaths may need regeneration after position changes
+    - Orientation axes should be perpendicular (will be orthogonalized if not)
+    
+    Requirements: 12.1, 12.2, 12.3, 12.5
+    """
+    try:
+        endpoint = f"{get_endpoints('cam')['cam_setup_part_position']}/{setup_id}/part-position"
+        payload = {
+            "setup_id": setup_id,
+            "position": position,
+            "orientation": orientation
+        }
+        return send_request(endpoint, payload, method="PUT")
+    except Exception as e:
+        logging.error("Set part position failed: %s", e)
+        return {
+            "error": True,
+            "message": f"Failed to set part position: {str(e)}",
+            "code": "PART_POSITION_UPDATE_FAILED"
         }
