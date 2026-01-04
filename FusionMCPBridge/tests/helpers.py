@@ -47,7 +47,7 @@ def make_request(
     Args:
         endpoint: The endpoint path (e.g., "/cam/setups")
         method: HTTP method (GET, POST, PUT, DELETE)
-        data: Optional JSON data for POST/PUT requests
+        data: Optional data - passed as query params for GET, JSON body for POST/PUT
         timeout: Request timeout in seconds
         
     Returns:
@@ -56,7 +56,8 @@ def make_request(
     url = f"{BRIDGE_BASE_URL}{endpoint}"
     
     if method.upper() == "GET":
-        return requests.get(url, timeout=timeout)
+        # Pass data as query parameters for GET requests
+        return requests.get(url, params=data, timeout=timeout)
     elif method.upper() == "POST":
         return requests.post(url, json=data or {}, timeout=timeout)
     elif method.upper() == "PUT":

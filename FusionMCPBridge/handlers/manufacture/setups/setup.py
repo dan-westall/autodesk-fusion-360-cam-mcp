@@ -197,9 +197,36 @@ def _extract_stock_info(setup) -> dict:
 
 
 def _extract_model_reference(setup) -> str:
-    """Extract model reference from a setup (root level)."""
+    """Extract model reference from a setup (root level).
+    
+    Note: This is a stub implementation. Actual model reference extraction
+    requires inspecting setup.models or setup.sourceBody properties which
+    vary by Fusion 360 API version. Returns None when extraction is not
+    possible.
+    
+    Args:
+        setup: The CAM setup object
+        
+    Returns:
+        Model reference ID string, or None if not extractable
+    """
     try:
-        return "model_placeholder_id"
+        # Try to get model reference from setup's models collection
+        if hasattr(setup, 'models') and setup.models:
+            models = setup.models
+            if models.count > 0:
+                model = models.item(0)
+                if hasattr(model, 'entityToken') and model.entityToken:
+                    return model.entityToken
+        
+        # Try to get from sourceBody
+        if hasattr(setup, 'sourceBody') and setup.sourceBody:
+            body = setup.sourceBody
+            if hasattr(body, 'entityToken') and body.entityToken:
+                return body.entityToken
+        
+        # Could not extract model reference
+        return None
     except Exception:
         return None
 
@@ -1601,8 +1628,19 @@ def handle_get_setup(path: str, method: str, data: Dict[str, Any]) -> Dict[str, 
         # READ-ONLY: Call impl function directly (no task_queue needed)
         result = get_setup_by_id_impl(setup_id)
         
+        # Determine appropriate status code based on error type
+        if result.get("error"):
+            if result.get("code") == "SETUP_NOT_FOUND":
+                status = 404
+            elif result.get("code") == "MISSING_SETUP_ID":
+                status = 400
+            else:
+                status = 500
+        else:
+            status = 200
+        
         return {
-            "status": 200 if not result.get("error") else 500,
+            "status": status,
             "data": result,
             "headers": {"Content-Type": "application/json"}
         }

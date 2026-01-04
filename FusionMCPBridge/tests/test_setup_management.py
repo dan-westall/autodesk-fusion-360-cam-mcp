@@ -831,9 +831,8 @@ class TestSetupDeletion:
         """Test that empty setups can be deleted without confirmation."""
         def handler(path, method, data):
             setup_id = data.get("setup_id")
-            confirm = data.get("confirm", False)
             
-            # Simulate empty setup
+            # Simulate empty setup - no operations means no confirmation needed
             operation_count = 0
             
             # Empty setups don't require confirmation

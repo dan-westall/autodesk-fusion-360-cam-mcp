@@ -159,9 +159,22 @@ def validate_part_position(position: dict, orientation: dict = None) -> dict:
 
 
 def _normalize_vector(vector: list) -> list:
-    """Normalize a 3D vector to unit length."""
+    """Normalize a 3D vector to unit length.
+    
+    Args:
+        vector: A 3D vector as a list [x, y, z]
+        
+    Returns:
+        Normalized unit vector, or [0.0, 0.0, 0.0] for near-zero vectors
+        
+    Note:
+        Near-zero vectors (length < 1e-10) return [0.0, 0.0, 0.0] which may
+        cause issues in downstream cross product or orientation calculations.
+        Callers should validate input vectors before use.
+    """
     length = math.sqrt(vector[0]**2 + vector[1]**2 + vector[2]**2)
     if length < 1e-10:
+        logger.warning(f"Near-zero vector provided: {vector}. This may cause issues in orientation calculations.")
         return [0.0, 0.0, 0.0]
     return [vector[0]/length, vector[1]/length, vector[2]/length]
 
@@ -354,13 +367,19 @@ def _analyze_part_position_impact(setup, new_position: dict, new_orientation: di
             
             # Check if orientation is changing
             if new_orientation:
-                impact["has_impact"] = True
-                impact["affected_operations"] = operation_count
-                impact["requires_regeneration"] = True
-                impact["warnings"].append(
-                    f"Part orientation change will affect {operation_count} existing operation(s). "
-                    "All toolpaths will need regeneration."
+                current_orientation = current_position.get("orientation", {})
+                orientation_changed = (
+                    new_orientation.get("x_axis") != current_orientation.get("x_axis") or
+                    new_orientation.get("y_axis") != current_orientation.get("y_axis")
                 )
+                if orientation_changed:
+                    impact["has_impact"] = True
+                    impact["affected_operations"] = operation_count
+                    impact["requires_regeneration"] = True
+                    impact["warnings"].append(
+                        f"Part orientation change will affect {operation_count} existing operation(s). "
+                        "All toolpaths will need regeneration."
+                    )
         
         return impact
         

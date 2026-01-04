@@ -154,22 +154,30 @@ class TestCreateSetup:
         
         assert not response_is_empty(response), "Response should not be empty"
         
+        # Note: 501 (not implemented) is also acceptable
+        if response.status_code == 501:
+            pytest.skip("Create setup not implemented")
+        
         data = response.json()
         
-        # Should indicate missing parameters or error
+        # Should indicate missing parameters, error, or succeed with defaults
         is_error = (
             response.status_code in [400, 422, 500] or
             data.get("error") is True or
             "required" in str(data).lower() or
             "missing" in str(data).lower()
         )
-        # Note: 501 (not implemented) is also acceptable
-        if response.status_code == 501:
-            pytest.skip("Create setup not implemented")
         
-        assert is_error or response.status_code == 200, (
-            f"Expected error or success for create: {data}"
-        )
+        if is_error:
+            # Verify error response structure
+            assert response.status_code >= 400, (
+                f"Error response should have 4xx/5xx status code: {response.status_code}, data: {data}"
+            )
+        else:
+            # Success case - implementation creates setup with defaults
+            assert response.status_code in [200, 201], (
+                f"Success response should have 200/201 status code: {response.status_code}, data: {data}"
+            )
     
     @pytest.mark.destructive
     def test_create_setup_with_name(self, bridge_available):

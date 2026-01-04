@@ -342,19 +342,16 @@ class TestSmokeTests:
     Run these first to catch obvious issues.
     """
     
-    @pytest.mark.skip(reason="Uses local make_request helper with different return signature")
     def test_bridge_responds(self, bridge_available):
         """Verify bridge is responding."""
         result = make_request("/test_connection")
         assert result["status_code"] is not None
     
-    @pytest.mark.skip(reason="Uses local make_request helper with different return signature")
     def test_cam_setups_not_broken(self, bridge_available):
         """Quick check that CAM setups endpoint works."""
         result = make_request("/cam/setups")
         assert result["response"] != {}, "CAM setups endpoint is broken (empty response)"
     
-    @pytest.mark.skip(reason="Uses local make_request helper with different return signature")
     def test_cam_toolpaths_not_broken(self, bridge_available):
         """Quick check that CAM toolpaths endpoint works."""
         result = make_request("/cam/toolpaths")

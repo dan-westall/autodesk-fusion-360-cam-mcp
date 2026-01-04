@@ -278,6 +278,7 @@ class TestGlobalRequestRouter:
     def test_global_instance_exists(self):
         """Test that global request_router instance exists."""
         assert request_router is not None
+        assert isinstance(request_router, RequestRouter)
 
 
 class TestQueryParameterHandling:
@@ -368,7 +369,6 @@ class TestQueryParameterHandling:
         assert response["status"] == 200
         assert response["data"]["setup_id"] == "setup_001"
         assert response["data"]["include_details"] == "true"
-        assert isinstance(request_router, RequestRouter)
 
 
 if __name__ == "__main__":

@@ -72,23 +72,29 @@ from .stock import (
 # =============================================================================
 # Re-export from WCS module
 # =============================================================================
-from .wcs import (
-    configure_wcs,
-    validate_wcs_configuration,
-    integrate_model_id_with_wcs,
-    validate_orientation_vectors,
-)
+try:
+    from .wcs import (
+        configure_wcs,
+        validate_wcs_configuration,
+        integrate_model_id_with_wcs,
+        validate_orientation_vectors,
+    )
+except ImportError:
+    pass  # Already warned above
 
 # =============================================================================
 # Re-export from part position module
 # =============================================================================
-from .part_position import (
-    get_part_position_impl,
-    set_part_position_impl,
-    validate_part_position,
-    handle_get_part_position,
-    handle_set_part_position,
-)
+try:
+    from .part_position import (
+        get_part_position_impl,
+        set_part_position_impl,
+        validate_part_position,
+        handle_get_part_position,
+        handle_set_part_position,
+    )
+except ImportError:
+    pass  # Already warned above
 
 __all__ = [
     # Submodules

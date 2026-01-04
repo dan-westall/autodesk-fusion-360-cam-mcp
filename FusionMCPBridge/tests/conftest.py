@@ -398,11 +398,21 @@ def design_document_required(bridge_available):
     Fixture that marks tests requiring an open design document.
     
     Tests using this fixture will be skipped if no design is open.
+    Uses /list_parameters endpoint which fails when no design is active.
     """
     try:
-        response = make_request("/test_connection")
+        # Use a design-specific endpoint that fails when no design is open
+        response = make_request("/list_parameters")
         if response.status_code != 200:
-            pytest.skip("No design document open")
+            # Check if the error indicates no design is open
+            try:
+                data = response.json()
+                error_msg = str(data).lower()
+                if "no design" in error_msg or "no active" in error_msg or "design" in error_msg:
+                    pytest.skip("No design document open")
+            except Exception:
+                pass
+            pytest.skip("No design document open or endpoint unavailable")
     except requests.exceptions.RequestException:
         pytest.skip("Could not verify design document availability")
     

@@ -86,17 +86,24 @@ class TestGeometryCreation:
         if response.status_code == 501:
             pytest.skip("Draw box not implemented")
         
-        # Should return error for missing params
+        # Should return error for missing params or succeed with defaults
         data = response.json()
         is_error = (
             response.status_code in [400, 422, 500] or
             data.get("error") is True or
             "required" in str(data).lower()
         )
-        # Some implementations may use defaults
-        assert is_error or response.status_code == 200, (
-            f"Expected error or success: {data}"
-        )
+        
+        if is_error:
+            # Verify error response has expected structure
+            assert response.status_code >= 400, (
+                f"Error response should have 4xx/5xx status: {response.status_code}"
+            )
+        else:
+            # Success case - implementation uses defaults
+            assert response.status_code == 200, (
+                f"Success response should have 200 status: {response.status_code}"
+            )
     
     @pytest.mark.destructive
     def test_draw_cylinder_returns_response(self, bridge_available):
