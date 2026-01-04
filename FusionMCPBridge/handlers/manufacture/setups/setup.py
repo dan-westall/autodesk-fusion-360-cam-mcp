@@ -1594,8 +1594,17 @@ def handle_list_setups(path: str, method: str, data: Dict[str, Any]) -> Dict[str
         # READ-ONLY: Call impl function directly (no task_queue needed)
         result = list_setups_detailed()
         
+        # Determine appropriate status code based on error type
+        if result.get("error"):
+            if result.get("code") == "SETUP_NOT_FOUND":
+                status = 404
+            else:
+                status = 500
+        else:
+            status = 200
+        
         return {
-            "status": 200 if not result.get("error") else 500,
+            "status": status,
             "data": result,
             "headers": {"Content-Type": "application/json"}
         }
