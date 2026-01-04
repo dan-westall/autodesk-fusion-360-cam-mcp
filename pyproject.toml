@@ -1,0 +1,108 @@
+[project]
+name = "fusion-mcp"
+version = "0.1.0"
+description = "MCP integration for Autodesk Fusion 360"
+requires-python = ">=3.10"
+dependencies = [
+    "fastmcp>=2.12.0",
+    "uvicorn>=0.35.0",
+    "requests>=2.32.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.14.10",
+    "hypothesis>=6.100.0",
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+install-fusion-plugin = "Server.cli:install_plugin"
+start-mcp-server = "Server.cli:start_server"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["Server"]
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "FusionMCPBridge/__pycache__",
+    "Server/__pycache__",
+    "tests/__pycache__",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.10+
+target-version = "py310"
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+select = ["E4", "E7", "E9", "F"]
+ignore = []
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+[tool.pytest.ini_options]
+# IMPORTANT: Tests must be run separately for Server and FusionMCPBridge
+# due to conflicting core/ module names. See .kiro/steering/python-testing.md
+#
+# Run Server tests:     uv run pytest Server/tests/ -v
+# Run Bridge tests:     uv run pytest FusionMCPBridge/tests/ -v
+#
+# DO NOT run both together - causes import conflicts!
+testpaths = ["Server/tests", "FusionMCPBridge/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
