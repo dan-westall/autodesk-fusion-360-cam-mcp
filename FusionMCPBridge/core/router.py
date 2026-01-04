@@ -161,7 +161,7 @@ class RequestRouter:
         Route an HTTP request to the appropriate handler with comprehensive error handling
         
         Args:
-            path: Request path
+            path: Request path (may include query parameters)
             method: HTTP method
             data: Request data (for POST/PUT requests)
             
@@ -172,6 +172,18 @@ class RequestRouter:
             data = {}
         
         try:
+            # Parse query parameters from path and merge into data
+            clean_path = path
+            if '?' in path:
+                clean_path, query_string = path.split('?', 1)
+                # Parse query parameters
+                from urllib.parse import parse_qs
+                query_params = parse_qs(query_string)
+                # Flatten single-value lists and merge into data
+                for key, values in query_params.items():
+                    if key not in data:  # Don't override existing data
+                        data[key] = values[0] if len(values) == 1 else values
+            
             # Convert method to enum
             try:
                 http_method = HttpMethod(method.upper())
@@ -218,12 +230,12 @@ class RequestRouter:
                 module_logger.error(f"Validation error: {error_response.message}")
                 return self._create_error_response(500, "Validation error")
             
-            # Find matching route
-            route_info, path_params = self._find_matching_route(path, http_method)
+            # Find matching route (use clean_path without query parameters)
+            route_info, path_params = self._find_matching_route(clean_path, http_method)
             
             if not route_info:
                 self.stats['requests_failed'] += 1
-                return self._create_error_response(404, f"No route found for: {method} {path}")
+                return self._create_error_response(404, f"No route found for: {method} {clean_path}")
             
             # Execute handler with error isolation
             try:

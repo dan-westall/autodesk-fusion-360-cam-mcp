@@ -3,6 +3,11 @@ Stock Configuration Handler
 
 Handles stock configuration for CAM setups including automatic, geometry-based,
 box, and cylinder stock modes.
+
+This module is part of the modular setups/ directory structure following
+the patterns from operations/ and tool_libraries/ modules.
+
+Requirements: 3.1, 3.2, 3.3, 3.4, 3.5
 """
 
 import adsk.core

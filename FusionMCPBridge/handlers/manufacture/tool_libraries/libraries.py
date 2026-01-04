@@ -17,6 +17,9 @@ def handle_list_libraries(path: str, method: str, data: Dict[str, Any]) -> Dict[
     """
     List available tool library files.
     
+    NOTE: This is a READ-ONLY operation - calls impl directly without task_queue.
+    The task_queue callback pattern doesn't work for HTTP handlers.
+    
     Args:
         path: Request path
         method: HTTP method
@@ -26,29 +29,11 @@ def handle_list_libraries(path: str, method: str, data: Dict[str, Any]) -> Dict[
         Response with tool libraries list or error information
     """
     try:
-        result = {}
+        # Import tool library functions
+        from ....tool_library import list_tool_libraries
         
-        def execute_list_libraries():
-            nonlocal result
-            try:
-                # Import tool library functions
-                from ....tool_library import list_tool_libraries
-                result = list_tool_libraries()
-            except Exception as e:
-                result = {
-                    "error": True,
-                    "message": f"Error listing tool libraries: {str(e)}",
-                    "code": "TOOL_LIBRARIES_LIST_ERROR"
-                }
-        
-        task_queue.queue_task(
-            "list_tool_libraries",
-            priority=TaskPriority.NORMAL,
-            module_context="manufacture.tool_libraries.libraries",
-            callback=execute_list_libraries
-        )
-        
-        task_queue.process_tasks()
+        # READ-ONLY: Call function directly (no task_queue needed)
+        result = list_tool_libraries()
         
         return {
             "status": 200 if not result.get("error") else 500,
@@ -69,6 +54,8 @@ def handle_get_library_info(path: str, method: str, data: Dict[str, Any]) -> Dic
     """
     Get detailed information about a specific tool library.
     
+    NOTE: This is a READ-ONLY operation - calls impl directly without task_queue.
+    
     Args:
         path: Request path
         method: HTTP method
@@ -87,28 +74,9 @@ def handle_get_library_info(path: str, method: str, data: Dict[str, Any]) -> Dic
                 "headers": {"Content-Type": "application/json"}
             }
         
-        result = {}
-        
-        def execute_get_library_info():
-            nonlocal result
-            try:
-                from ....tool_library import get_library_info
-                result = get_library_info(library_id)
-            except Exception as e:
-                result = {
-                    "error": True,
-                    "message": f"Error getting library info: {str(e)}",
-                    "code": "LIBRARY_INFO_ERROR"
-                }
-        
-        task_queue.queue_task(
-            "get_library_info",
-            priority=TaskPriority.NORMAL,
-            module_context="manufacture.tool_libraries.libraries",
-            callback=execute_get_library_info
-        )
-        
-        task_queue.process_tasks()
+        # READ-ONLY: Call function directly (no task_queue needed)
+        from ....tool_library import get_library_info
+        result = get_library_info(library_id)
         
         return {
             "status": 200 if not result.get("error") else 500,
@@ -170,6 +138,8 @@ def handle_validate_library_access(path: str, method: str, data: Dict[str, Any])
     """
     Validate access to tool libraries and check permissions.
     
+    NOTE: This is a READ-ONLY operation - calls impl directly without task_queue.
+    
     Args:
         path: Request path
         method: HTTP method
@@ -179,28 +149,9 @@ def handle_validate_library_access(path: str, method: str, data: Dict[str, Any])
         Response with validation results or error
     """
     try:
-        result = {}
-        
-        def execute_validate_library_access():
-            nonlocal result
-            try:
-                from ....tool_library import validate_tool_library_access
-                result = validate_tool_library_access()
-            except Exception as e:
-                result = {
-                    "error": True,
-                    "message": f"Error validating library access: {str(e)}",
-                    "code": "LIBRARY_ACCESS_VALIDATION_ERROR"
-                }
-        
-        task_queue.queue_task(
-            "validate_library_access",
-            priority=TaskPriority.NORMAL,
-            module_context="manufacture.tool_libraries.libraries",
-            callback=execute_validate_library_access
-        )
-        
-        task_queue.process_tasks()
+        # READ-ONLY: Call function directly (no task_queue needed)
+        from ....tool_library import validate_tool_library_access
+        result = validate_tool_library_access()
         
         return {
             "status": 200 if not result.get("error") else 500,

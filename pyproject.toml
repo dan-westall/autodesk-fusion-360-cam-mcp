@@ -97,12 +97,25 @@ line-ending = "auto"
 # IMPORTANT: Tests must be run separately for Server and FusionMCPBridge
 # due to conflicting core/ module names. See .kiro/steering/python-testing.md
 #
-# Run Server tests:     uv run pytest Server/tests/ -v
-# Run Bridge tests:     uv run pytest FusionMCPBridge/tests/ -v
+# Run Server tests:        uv run pytest Server/tests/ -v
+# Run Bridge unit tests:   uv run pytest FusionMCPBridge/tests/ -v
+# Run integration tests:   uv run pytest FusionMCPBridge/tests/ -v --integration
+#                          (requires Fusion 360 to be running with add-in active)
 #
-# DO NOT run both together - causes import conflicts!
+# Integration tests are SKIPPED by default. Use --integration flag to run them.
+#
+# DO NOT run both Server and Bridge together - causes import conflicts!
 testpaths = ["Server/tests", "FusionMCPBridge/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+markers = [
+    "integration: marks tests as integration tests (require --integration flag and running Fusion 360)",
+    "live: alias for integration marker",
+    "smoke: marks quick validation tests for basic functionality",
+    "slow: marks tests that take > 5 seconds to complete",
+    "destructive: marks tests that modify Fusion 360 state (create/delete operations)",
+    "manufacture: marks tests requiring MANUFACTURE workspace",
+    "design: marks tests requiring Design workspace",
+]

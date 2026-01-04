@@ -17,11 +17,29 @@ The CAM Setup Management feature follows the established two-tier architecture:
    - Handles request validation and error formatting
    - Integrates with existing CAM tool patterns
 
-2. **Fusion Add-In Layer** (`FusionMCPBridge/cam.py` extensions)
+2. **Fusion Add-In Layer** (`FusionMCPBridge/handlers/manufacture/setups/`)
+   - Modular directory structure aligned with existing `operations/` and `tool_libraries/` modules
    - Implements Fusion 360 API interactions
    - Manages setup creation, modification, and deletion
    - Provides helper functions for setup-toolpath relationships
    - **May require Design workspace integration** for model selection and geometry updates
+
+### Modular Directory Structure
+
+The setup management functionality follows the established modular pattern:
+
+```
+FusionMCPBridge/handlers/manufacture/setups/
+├── __init__.py           # Exports all public functions from submodules
+├── setup.py              # Core setup management (create, list, get, modify, delete, duplicate)
+├── stock.py              # Stock definition and configuration
+├── part_position.py      # Part position configuration relative to WCS
+└── wcs.py                # WCS configuration (moved from parent directory)
+```
+
+This structure mirrors existing modules:
+- `operations/` - toolpaths.py, heights.py, passes.py, linking.py, tools.py
+- `tool_libraries/` - libraries.py, tools.py, search.py
 
 ### Integration Points
 
@@ -40,7 +58,7 @@ The CAM Setup Management feature follows the established two-tier architecture:
 
 ```python
 @mcp.tool()
-def create_cam_setup(name: str = None, stock_mode: str = "auto", coordinate_system: dict = None) -> dict:
+def create_cam_setup(name: str = None, stock_mode: str = "auto", wcs: dict = None, part_position: dict = None) -> dict:
     """Create a new CAM setup with specified configuration."""
 
 @mcp.tool()
@@ -64,6 +82,18 @@ def duplicate_cam_setup(setup_id: str, new_name: str = None) -> dict:
     """Create a duplicate of an existing setup."""
 ```
 
+#### Part Position Tools
+
+```python
+@mcp.tool()
+def get_part_position(setup_id: str) -> dict:
+    """Get the part position configuration for a setup."""
+
+@mcp.tool()
+def set_part_position(setup_id: str, position: dict) -> dict:
+    """Set the part position and orientation relative to WCS."""
+```
+
 #### Setup-Toolpath Integration Tools
 
 ```python
@@ -80,31 +110,70 @@ def move_toolpath_to_setup(toolpath_id: str, target_setup_id: str) -> dict:
     """Move a toolpath from one setup to another."""
 ```
 
-### Fusion Add-In Extensions (`FusionMCPBridge/cam.py`)
+### Fusion Add-In Modular Structure (`FusionMCPBridge/handlers/manufacture/setups/`)
 
-#### Setup Management Functions
+#### Setup Core Functions (`setup.py`)
 
 ```python
-def create_setup(name: str, stock_config: dict, coordinate_system: dict) -> dict:
+def create_setup_impl(name: str, stock_config: dict, wcs: dict, part_position: dict = None) -> dict:
     """Create a new CAM setup with specified configuration."""
 
 def list_setups_detailed() -> dict:
     """List all setups with comprehensive configuration details."""
 
-def get_setup_by_id(setup_id: str) -> dict:
+def get_setup_by_id_impl(setup_id: str) -> dict:
     """Retrieve detailed setup information by ID."""
 
-def modify_setup(setup_id: str, updates: dict) -> dict:
+def modify_setup_impl(setup_id: str, updates: dict) -> dict:
     """Update setup configuration with validation."""
 
-def delete_setup(setup_id: str) -> dict:
+def delete_setup_impl(setup_id: str) -> dict:
     """Remove a setup and handle dependent operations."""
 
-def duplicate_setup(source_id: str, new_name: str) -> dict:
+def duplicate_setup_impl(source_id: str, new_name: str) -> dict:
     """Create a copy of an existing setup."""
 ```
 
-#### Helper Functions
+#### Stock Functions (`stock.py`)
+
+```python
+def configure_stock(setup_id: str, stock_config: dict) -> dict:
+    """Configure stock definition for a setup."""
+
+def get_stock_configuration(setup_id: str) -> dict:
+    """Get current stock configuration for a setup."""
+
+def validate_stock_config(stock_config: dict) -> dict:
+    """Validate stock configuration parameters."""
+```
+
+#### Part Position Functions (`part_position.py`)
+
+```python
+def get_part_position_impl(setup_id: str) -> dict:
+    """Get the part position configuration for a setup."""
+
+def set_part_position_impl(setup_id: str, position: dict, orientation: dict = None) -> dict:
+    """Set the part position and orientation relative to WCS."""
+
+def validate_part_position(position: dict, orientation: dict = None) -> dict:
+    """Validate part position parameters."""
+```
+
+#### WCS Functions (`wcs.py`)
+
+```python
+def configure_wcs(setup_id: str, wcs_config: dict) -> dict:
+    """Configure WCS for a setup."""
+
+def get_wcs_configuration(setup_id: str) -> dict:
+    """Get current WCS configuration for a setup."""
+
+def validate_wcs_config(wcs_config: dict) -> dict:
+    """Validate WCS configuration parameters."""
+```
+
+#### Helper Functions (in `__init__.py` or dedicated `helpers.py`)
 
 ```python
 def get_toolpaths_for_setup(setup_id: str) -> dict:
@@ -121,12 +190,23 @@ def validate_setup_toolpath_relationship(setup_id: str, toolpath_id: str) -> boo
 
 New endpoints will be added to the Fusion Add-In HTTP server:
 
+#### Setup Core Endpoints
 - `POST /cam/setups` - Create new setup
 - `GET /cam/setups` - List all setups
 - `GET /cam/setups/{id}` - Get setup details
 - `PUT /cam/setups/{id}` - Modify setup
 - `DELETE /cam/setups/{id}` - Delete setup
 - `POST /cam/setups/{id}/duplicate` - Duplicate setup
+
+#### Part Position Endpoints
+- `GET /cam/setups/{id}/part-position` - Get part position configuration
+- `PUT /cam/setups/{id}/part-position` - Set part position configuration
+
+#### Stock Endpoints
+- `GET /cam/setups/{id}/stock` - Get stock configuration
+- `PUT /cam/setups/{id}/stock` - Set stock configuration
+
+#### Setup-Toolpath Integration Endpoints
 - `GET /cam/setups/{id}/toolpaths` - Get setup toolpaths
 - `GET /cam/toolpaths/{id}/setup` - Get toolpath's setup
 
@@ -148,6 +228,18 @@ New endpoints will be added to the Fusion Add-In HTTP server:
         "type": "string",     # To be determined from API investigation
         "origin": {},         # Structure TBD from API research
         "orientation": {},    # Structure TBD from API research
+    },
+    "part_position": {        # Part position relative to WCS
+        "origin": {
+            "x": float,
+            "y": float,
+            "z": float
+        },
+        "orientation": {      # Optional orientation data
+            "x_axis": [float, float, float],  # X-axis direction vector
+            "y_axis": [float, float, float],  # Y-axis direction vector
+            "z_axis": [float, float, float]   # Z-axis direction vector (computed or specified)
+        }
     },
     "stock": {
         "mode": "string",     # "auto", "geometry", "box", "cylinder"
@@ -194,7 +286,37 @@ New endpoints will be added to the Fusion Add-In HTTP server:
         # - Orientation selection methods
         # - Origin specification methods  
         "config": {}         # Structure TBD from API investigation
+    },
+    "part_position": {       # Optional part position configuration
+        "origin": {
+            "x": float,
+            "y": float,
+            "z": float
+        },
+        "orientation": {     # Optional orientation
+            "x_axis": [float, float, float],
+            "y_axis": [float, float, float]
+        }
     }
+}
+```
+
+### Part Position Model
+
+```python
+{
+    "setup_id": "string",    # Parent setup identifier
+    "origin": {
+        "x": float,          # X position relative to WCS
+        "y": float,          # Y position relative to WCS
+        "z": float           # Z position relative to WCS
+    },
+    "orientation": {
+        "x_axis": [float, float, float],  # X-axis direction vector
+        "y_axis": [float, float, float],  # Y-axis direction vector
+        "z_axis": [float, float, float]   # Z-axis direction vector (computed)
+    },
+    "is_default": boolean    # Whether using default position
 }
 ```
 
@@ -303,7 +425,15 @@ After analyzing all acceptance criteria, several properties can be consolidated 
 
 **Property 12: Error handling robustness**
 *For any* invalid input (coordinate systems, stock configurations, setup modifications, non-existent IDs), the system should reject the operation, provide clear error messages, and maintain system state integrity
-**Validates: Requirements 2.5, 3.5, 5.4, 6.5, 7.5, 9.5**
+**Validates: Requirements 2.5, 3.5, 5.4, 6.5, 7.5, 9.5, 12.5**
+
+**Property 13: Part position configuration accuracy**
+*For any* valid part position specification (origin, orientation), the system should position the part geometry correctly relative to the WCS and update all dependent operations and toolpaths
+**Validates: Requirements 12.1, 12.2, 12.3, 12.4**
+
+**Property 14: Modular architecture compliance**
+*For any* setup management implementation, the code should be organized in the modular `handlers/manufacture/setups/` directory structure with separate modules for setup core, stock, part position, and WCS functionality
+**Validates: Requirements 13.1, 13.2, 13.3, 13.4, 13.5**
 
 ## Error Handling
 
@@ -355,8 +485,9 @@ All errors follow the established pattern:
 - `SETUP_NOT_FOUND` - Requested setup does not exist
 - `INVALID_SETUP_CONFIG` - Setup configuration is invalid
 - `SETUP_HAS_TOOLPATHS` - Cannot delete setup with active toolpaths
-- `COORDINATE_SYSTEM_INVALID` - Invalid coordinate system specification
+- `WCS_INVALID` - Invalid WCS specification
 - `STOCK_CONFIG_INVALID` - Invalid stock configuration
+- `PART_POSITION_INVALID` - Invalid part position configuration
 - `TOOLPATH_SETUP_MISMATCH` - Toolpath does not belong to specified setup
 - `SETUP_NAME_CONFLICT` - Setup name already exists
 - `SETUP_MODIFICATION_FAILED` - Setup modification could not be applied

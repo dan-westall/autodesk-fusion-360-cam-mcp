@@ -13,6 +13,7 @@ docs/
 │   └── MODULAR_SYSTEM_IMPLEMENTATION.md
 │
 ├── guides/                 # Developer and user guides
+│   ├── CAM_SETUP_MANAGEMENT.md
 │   ├── DEVELOPER_ONBOARDING.md
 │   ├── ERROR_HANDLING.md
 │   └── CONFIGURATION_MANAGEMENT.md
@@ -41,6 +42,7 @@ docs/
 - [Implementation Details](architecture/MODULAR_SYSTEM_IMPLEMENTATION.md) - Technical implementation
 
 ### Development Guides
+- [CAM Setup Management](guides/CAM_SETUP_MANAGEMENT.md) - Complete guide to CAM setup management tools
 - [Error Handling](guides/ERROR_HANDLING.md) - Error handling patterns and best practices
 - [Configuration Management](guides/CONFIGURATION_MANAGEMENT.md) - Configuration system documentation
 

@@ -17,6 +17,8 @@ def handle_list_tools(path: str, method: str, data: Dict[str, Any]) -> Dict[str,
     """
     List tools in library catalogs.
     
+    NOTE: This is a READ-ONLY operation - calls impl directly without task_queue.
+    
     Args:
         path: Request path
         method: HTTP method
@@ -28,31 +30,12 @@ def handle_list_tools(path: str, method: str, data: Dict[str, Any]) -> Dict[str,
     try:
         library_id = data.get("library_id")
         
-        result = {}
-        
-        def execute_list_tools():
-            nonlocal result
-            try:
-                from ....tool_library import list_tools_in_libraries
-                if library_id:
-                    result = list_tools_in_libraries(library_id=library_id)
-                else:
-                    result = list_tools_in_libraries()
-            except Exception as e:
-                result = {
-                    "error": True,
-                    "message": f"Error listing tools: {str(e)}",
-                    "code": "TOOLS_LIST_ERROR"
-                }
-        
-        task_queue.queue_task(
-            "list_tools_in_libraries",
-            priority=TaskPriority.NORMAL,
-            module_context="manufacture.tool_libraries.tools",
-            callback=execute_list_tools
-        )
-        
-        task_queue.process_tasks()
+        # READ-ONLY: Call function directly (no task_queue needed)
+        from ....tool_library import list_tools_in_libraries
+        if library_id:
+            result = list_tools_in_libraries(library_id=library_id)
+        else:
+            result = list_tools_in_libraries()
         
         return {
             "status": 200 if not result.get("error") else 500,
@@ -73,6 +56,8 @@ def handle_get_tool(path: str, method: str, data: Dict[str, Any]) -> Dict[str, A
     """
     Get detailed information about a specific tool from library catalogs.
     
+    NOTE: This is a READ-ONLY operation - calls impl directly without task_queue.
+    
     Args:
         path: Request path
         method: HTTP method
@@ -91,36 +76,17 @@ def handle_get_tool(path: str, method: str, data: Dict[str, Any]) -> Dict[str, A
                 "headers": {"Content-Type": "application/json"}
             }
         
-        result = {}
-        
-        def execute_get_tool():
-            nonlocal result
-            try:
-                from ....tool_library import find_tool_by_id, serialize_tool
-                tool = find_tool_by_id(tool_id)
-                if tool:
-                    result = serialize_tool(tool)
-                else:
-                    result = {
-                        "error": True,
-                        "message": f"Tool with ID '{tool_id}' not found",
-                        "code": "TOOL_NOT_FOUND"
-                    }
-            except Exception as e:
-                result = {
-                    "error": True,
-                    "message": f"Error getting tool: {str(e)}",
-                    "code": "TOOL_GET_ERROR"
-                }
-        
-        task_queue.queue_task(
-            "get_tool_from_library",
-            priority=TaskPriority.NORMAL,
-            module_context="manufacture.tool_libraries.tools",
-            callback=execute_get_tool
-        )
-        
-        task_queue.process_tasks()
+        # READ-ONLY: Call function directly (no task_queue needed)
+        from ....tool_library import find_tool_by_id, serialize_tool
+        tool = find_tool_by_id(tool_id)
+        if tool:
+            result = serialize_tool(tool)
+        else:
+            result = {
+                "error": True,
+                "message": f"Tool with ID '{tool_id}' not found",
+                "code": "TOOL_NOT_FOUND"
+            }
         
         return {
             "status": 200 if not result.get("error") else 500,
@@ -304,6 +270,8 @@ def handle_validate_tool_specification(path: str, method: str, data: Dict[str, A
     """
     Validate tool specification parameters.
     
+    NOTE: This is a READ-ONLY validation operation - calls impl directly without task_queue.
+    
     Args:
         path: Request path
         method: HTTP method
@@ -315,108 +283,8 @@ def handle_validate_tool_specification(path: str, method: str, data: Dict[str, A
     try:
         tool_spec = data.get("tool_spec", {})
         
-        result = {}
-        
-        def execute_validate_tool_specification():
-            nonlocal result
-            try:
-                validation_results = {
-                    "valid": True,
-                    "issues": [],
-                    "warnings": []
-                }
-                
-                # Validate required fields
-                required_fields = ["name", "type", "diameter"]
-                for field in required_fields:
-                    if field not in tool_spec or not tool_spec[field]:
-                        validation_results["issues"].append({
-                            "field": field,
-                            "issue": f"Required field '{field}' is missing or empty",
-                            "severity": "error"
-                        })
-                        validation_results["valid"] = False
-                
-                # Validate diameter
-                diameter = tool_spec.get("diameter")
-                if diameter is not None:
-                    if not isinstance(diameter, (int, float)) or diameter <= 0:
-                        validation_results["issues"].append({
-                            "field": "diameter",
-                            "issue": "Diameter must be a positive number",
-                            "severity": "error"
-                        })
-                        validation_results["valid"] = False
-                
-                # Validate overall length
-                overall_length = tool_spec.get("overall_length")
-                if overall_length is not None:
-                    if not isinstance(overall_length, (int, float)) or overall_length <= 0:
-                        validation_results["issues"].append({
-                            "field": "overall_length",
-                            "issue": "Overall length must be a positive number",
-                            "severity": "error"
-                        })
-                        validation_results["valid"] = False
-                
-                # Validate flute count
-                flute_count = tool_spec.get("flute_count")
-                if flute_count is not None:
-                    if not isinstance(flute_count, int) or flute_count <= 0:
-                        validation_results["issues"].append({
-                            "field": "flute_count",
-                            "issue": "Flute count must be a positive integer",
-                            "severity": "error"
-                        })
-                        validation_results["valid"] = False
-                
-                # Validate tool number
-                tool_number = tool_spec.get("tool_number")
-                if tool_number is not None:
-                    if not isinstance(tool_number, int) or tool_number < 0:
-                        validation_results["issues"].append({
-                            "field": "tool_number",
-                            "issue": "Tool number must be a non-negative integer",
-                            "severity": "error"
-                        })
-                        validation_results["valid"] = False
-                
-                # Validate cutting parameters
-                cutting_params = tool_spec.get("cutting_parameters", {})
-                if cutting_params:
-                    spindle_speed = cutting_params.get("spindle_speed")
-                    if spindle_speed is not None and (not isinstance(spindle_speed, (int, float)) or spindle_speed <= 0):
-                        validation_results["warnings"].append({
-                            "field": "cutting_parameters.spindle_speed",
-                            "warning": "Spindle speed should be a positive number",
-                            "severity": "warning"
-                        })
-                    
-                    feed_rate = cutting_params.get("feed_rate")
-                    if feed_rate is not None and (not isinstance(feed_rate, (int, float)) or feed_rate <= 0):
-                        validation_results["warnings"].append({
-                            "field": "cutting_parameters.feed_rate",
-                            "warning": "Feed rate should be a positive number",
-                            "severity": "warning"
-                        })
-                
-                result = validation_results
-                
-            except Exception as e:
-                result = {
-                    "error": True,
-                    "message": f"Error validating tool specification: {str(e)}",
-                    "code": "TOOL_VALIDATION_ERROR"
-                }
-        
-        task_queue.queue_task(
-            "validate_tool_specification",
-            priority=TaskPriority.NORMAL,
-            module_context="manufacture.tool_libraries.tools",
-            callback=execute_validate_tool_specification
-        )
-        
-        task_queue.process_tasks()
+        # READ-ONLY: Call validation logic directly (no task_queue needed)
+        result = _validate_tool_specification_impl(tool_spec)
         
         return {
             "status": 200 if not result.get("error") else 500,
@@ -431,6 +299,107 @@ def handle_validate_tool_specification(path: str, method: str, data: Dict[str, A
             "error": True,
             "message": f"Handler error: {str(e)}",
             "headers": {"Content-Type": "application/json"}
+        }
+
+
+def _validate_tool_specification_impl(tool_spec: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Implementation of tool specification validation.
+    
+    Args:
+        tool_spec: Tool specification dictionary to validate
+        
+    Returns:
+        Validation results with issues and warnings
+    """
+    try:
+        validation_results = {
+            "valid": True,
+            "issues": [],
+            "warnings": []
+        }
+        
+        # Validate required fields
+        required_fields = ["name", "type", "diameter"]
+        for field in required_fields:
+            if field not in tool_spec or not tool_spec[field]:
+                validation_results["issues"].append({
+                    "field": field,
+                    "issue": f"Required field '{field}' is missing or empty",
+                    "severity": "error"
+                })
+                validation_results["valid"] = False
+        
+        # Validate diameter
+        diameter = tool_spec.get("diameter")
+        if diameter is not None:
+            if not isinstance(diameter, (int, float)) or diameter <= 0:
+                validation_results["issues"].append({
+                    "field": "diameter",
+                    "issue": "Diameter must be a positive number",
+                    "severity": "error"
+                })
+                validation_results["valid"] = False
+        
+        # Validate overall length
+        overall_length = tool_spec.get("overall_length")
+        if overall_length is not None:
+            if not isinstance(overall_length, (int, float)) or overall_length <= 0:
+                validation_results["issues"].append({
+                    "field": "overall_length",
+                    "issue": "Overall length must be a positive number",
+                    "severity": "error"
+                })
+                validation_results["valid"] = False
+        
+        # Validate flute count
+        flute_count = tool_spec.get("flute_count")
+        if flute_count is not None:
+            if not isinstance(flute_count, int) or flute_count <= 0:
+                validation_results["issues"].append({
+                    "field": "flute_count",
+                    "issue": "Flute count must be a positive integer",
+                    "severity": "error"
+                })
+                validation_results["valid"] = False
+        
+        # Validate tool number
+        tool_number = tool_spec.get("tool_number")
+        if tool_number is not None:
+            if not isinstance(tool_number, int) or tool_number < 0:
+                validation_results["issues"].append({
+                    "field": "tool_number",
+                    "issue": "Tool number must be a non-negative integer",
+                    "severity": "error"
+                })
+                validation_results["valid"] = False
+        
+        # Validate cutting parameters
+        cutting_params = tool_spec.get("cutting_parameters", {})
+        if cutting_params:
+            spindle_speed = cutting_params.get("spindle_speed")
+            if spindle_speed is not None and (not isinstance(spindle_speed, (int, float)) or spindle_speed <= 0):
+                validation_results["warnings"].append({
+                    "field": "cutting_parameters.spindle_speed",
+                    "warning": "Spindle speed should be a positive number",
+                    "severity": "warning"
+                })
+            
+            feed_rate = cutting_params.get("feed_rate")
+            if feed_rate is not None and (not isinstance(feed_rate, (int, float)) or feed_rate <= 0):
+                validation_results["warnings"].append({
+                    "field": "cutting_parameters.feed_rate",
+                    "warning": "Feed rate should be a positive number",
+                    "severity": "warning"
+                })
+        
+        return validation_results
+        
+    except Exception as e:
+        return {
+            "error": True,
+            "message": f"Error validating tool specification: {str(e)}",
+            "code": "TOOL_VALIDATION_ERROR"
         }
 
 # Register handlers with the router

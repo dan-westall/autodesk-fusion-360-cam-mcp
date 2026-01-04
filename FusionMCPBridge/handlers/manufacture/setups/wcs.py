@@ -3,6 +3,9 @@ Work Coordinate System (WCS) Configuration Handler
 
 Handles WCS configuration for CAM setups including model origin, face-based,
 edge-based, and custom WCS configurations.
+
+This module is part of the setups/ subpackage following the modular architecture
+pattern established by operations/ and tool_libraries/.
 """
 
 import adsk.core
