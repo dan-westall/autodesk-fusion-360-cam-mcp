@@ -18,6 +18,8 @@ def handle_search_tools(path: str, method: str, data: Dict[str, Any]) -> Dict[st
     """
     Search tools within library catalogs with advanced filtering.
     
+    NOTE: This is a READ-ONLY operation - calls impl directly without task_queue.
+    
     Args:
         path: Request path
         method: HTTP method
@@ -38,75 +40,11 @@ def handle_search_tools(path: str, method: str, data: Dict[str, Any]) -> Dict[st
         flute_count = data.get("flute_count")
         limit = data.get("limit", 50)
         
-        result = {}
-        
-        def execute_search_tools():
-            nonlocal result
-            try:
-                from ....tool_library import list_tools_in_libraries
-                
-                # Get all tools from libraries
-                if library_id:
-                    tools_data = list_tools_in_libraries(library_id=library_id)
-                else:
-                    tools_data = list_tools_in_libraries()
-                
-                if tools_data.get("error"):
-                    result = tools_data
-                    return
-                
-                # Collect all tools for searching
-                all_tools = []
-                for library in tools_data.get("libraries", []):
-                    for tool in library.get("tools", []):
-                        tool["library_name"] = library.get("name", "Unknown Library")
-                        tool["library_id"] = library.get("id", "unknown")
-                        all_tools.append(tool)
-                
-                # Apply search filters
-                filtered_tools = _apply_search_filters(
-                    all_tools, query, tool_type, diameter_min, diameter_max,
-                    material, coating, flute_count
-                )
-                
-                # Sort results by relevance
-                sorted_tools = _sort_search_results(filtered_tools, query)
-                
-                # Apply limit
-                if limit and len(sorted_tools) > limit:
-                    sorted_tools = sorted_tools[:limit]
-                
-                result = {
-                    "query": query,
-                    "filters": {
-                        "tool_type": tool_type,
-                        "diameter_min": diameter_min,
-                        "diameter_max": diameter_max,
-                        "library_id": library_id,
-                        "material": material,
-                        "coating": coating,
-                        "flute_count": flute_count
-                    },
-                    "total_results": len(sorted_tools),
-                    "tools": sorted_tools,
-                    "search_time": "< 1s"
-                }
-                
-            except Exception as e:
-                result = {
-                    "error": True,
-                    "message": f"Error searching tools: {str(e)}",
-                    "code": "TOOL_SEARCH_ERROR"
-                }
-        
-        task_queue.queue_task(
-            "search_tools",
-            priority=TaskPriority.NORMAL,
-            module_context="manufacture.tool_libraries.search",
-            callback=execute_search_tools
+        # READ-ONLY: Call search logic directly (no task_queue needed)
+        result = _search_tools_impl(
+            query, tool_type, diameter_min, diameter_max,
+            library_id, material, coating, flute_count, limit
         )
-        
-        task_queue.process_tasks()
         
         return {
             "status": 200 if not result.get("error") else 500,
@@ -123,9 +61,89 @@ def handle_search_tools(path: str, method: str, data: Dict[str, Any]) -> Dict[st
             "headers": {"Content-Type": "application/json"}
         }
 
+
+def _search_tools_impl(query: str, tool_type: Optional[str], diameter_min: Optional[float],
+                       diameter_max: Optional[float], library_id: Optional[str],
+                       material: Optional[str], coating: Optional[str],
+                       flute_count: Optional[int], limit: int) -> Dict[str, Any]:
+    """
+    Implementation of tool search logic.
+    
+    Args:
+        query: Search query string
+        tool_type: Filter by tool type
+        diameter_min: Minimum diameter filter
+        diameter_max: Maximum diameter filter
+        library_id: Filter by library ID
+        material: Filter by material
+        coating: Filter by coating
+        flute_count: Filter by flute count
+        limit: Maximum results to return
+        
+    Returns:
+        Search results dictionary
+    """
+    try:
+        from ....tool_library import list_tools_in_libraries
+        
+        # Get all tools from libraries
+        if library_id:
+            tools_data = list_tools_in_libraries(library_id=library_id)
+        else:
+            tools_data = list_tools_in_libraries()
+        
+        if tools_data.get("error"):
+            return tools_data
+        
+        # Collect all tools for searching
+        all_tools = []
+        for library in tools_data.get("libraries", []):
+            for tool in library.get("tools", []):
+                tool["library_name"] = library.get("name", "Unknown Library")
+                tool["library_id"] = library.get("id", "unknown")
+                all_tools.append(tool)
+        
+        # Apply search filters
+        filtered_tools = _apply_search_filters(
+            all_tools, query, tool_type, diameter_min, diameter_max,
+            material, coating, flute_count
+        )
+        
+        # Sort results by relevance
+        sorted_tools = _sort_search_results(filtered_tools, query)
+        
+        # Apply limit
+        if limit and len(sorted_tools) > limit:
+            sorted_tools = sorted_tools[:limit]
+        
+        return {
+            "query": query,
+            "filters": {
+                "tool_type": tool_type,
+                "diameter_min": diameter_min,
+                "diameter_max": diameter_max,
+                "library_id": library_id,
+                "material": material,
+                "coating": coating,
+                "flute_count": flute_count
+            },
+            "total_results": len(sorted_tools),
+            "tools": sorted_tools,
+            "search_time": "< 1s"
+        }
+        
+    except Exception as e:
+        return {
+            "error": True,
+            "message": f"Error searching tools: {str(e)}",
+            "code": "TOOL_SEARCH_ERROR"
+        }
+
 def handle_advanced_search(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Advanced tool search with complex criteria and sorting options.
+    
+    NOTE: This is a READ-ONLY operation - calls impl directly without task_queue.
     
     Args:
         path: Request path
@@ -142,73 +160,8 @@ def handle_advanced_search(path: str, method: str, data: Dict[str, Any]) -> Dict
         group_by = data.get("group_by")  # library, type, material
         limit = data.get("limit", 100)
         
-        result = {}
-        
-        def execute_advanced_search():
-            nonlocal result
-            try:
-                from ....tool_library import list_tools_in_libraries
-                
-                # Get all tools from libraries
-                tools_data = list_tools_in_libraries()
-                
-                if tools_data.get("error"):
-                    result = tools_data
-                    return
-                
-                # Collect all tools for searching
-                all_tools = []
-                for library in tools_data.get("libraries", []):
-                    for tool in library.get("tools", []):
-                        tool["library_name"] = library.get("name", "Unknown Library")
-                        tool["library_id"] = library.get("id", "unknown")
-                        all_tools.append(tool)
-                
-                # Apply advanced search criteria
-                filtered_tools = _apply_advanced_search_criteria(all_tools, search_criteria)
-                
-                # Sort results
-                sorted_tools = _sort_advanced_results(filtered_tools, sort_by, sort_order)
-                
-                # Apply limit
-                if limit and len(sorted_tools) > limit:
-                    sorted_tools = sorted_tools[:limit]
-                
-                # Group results if requested
-                if group_by:
-                    grouped_results = _group_search_results(sorted_tools, group_by)
-                    result = {
-                        "search_criteria": search_criteria,
-                        "sort_by": sort_by,
-                        "sort_order": sort_order,
-                        "group_by": group_by,
-                        "total_results": len(sorted_tools),
-                        "grouped_results": grouped_results
-                    }
-                else:
-                    result = {
-                        "search_criteria": search_criteria,
-                        "sort_by": sort_by,
-                        "sort_order": sort_order,
-                        "total_results": len(sorted_tools),
-                        "tools": sorted_tools
-                    }
-                
-            except Exception as e:
-                result = {
-                    "error": True,
-                    "message": f"Error in advanced search: {str(e)}",
-                    "code": "ADVANCED_SEARCH_ERROR"
-                }
-        
-        task_queue.queue_task(
-            "advanced_search_tools",
-            priority=TaskPriority.NORMAL,
-            module_context="manufacture.tool_libraries.search",
-            callback=execute_advanced_search
-        )
-        
-        task_queue.process_tasks()
+        # READ-ONLY: Call search logic directly (no task_queue needed)
+        result = _advanced_search_impl(search_criteria, sort_by, sort_order, group_by, limit)
         
         return {
             "status": 200 if not result.get("error") else 500,
@@ -225,9 +178,81 @@ def handle_advanced_search(path: str, method: str, data: Dict[str, Any]) -> Dict
             "headers": {"Content-Type": "application/json"}
         }
 
+
+def _advanced_search_impl(search_criteria: Dict[str, Any], sort_by: str,
+                          sort_order: str, group_by: Optional[str], limit: int) -> Dict[str, Any]:
+    """
+    Implementation of advanced tool search logic.
+    
+    Args:
+        search_criteria: Advanced search criteria dictionary
+        sort_by: Field to sort by (relevance, diameter, name, type)
+        sort_order: Sort order (asc, desc)
+        group_by: Field to group results by (library, type, material)
+        limit: Maximum results to return
+        
+    Returns:
+        Advanced search results dictionary
+    """
+    try:
+        from ....tool_library import list_tools_in_libraries
+        
+        # Get all tools from libraries
+        tools_data = list_tools_in_libraries()
+        
+        if tools_data.get("error"):
+            return tools_data
+        
+        # Collect all tools for searching
+        all_tools = []
+        for library in tools_data.get("libraries", []):
+            for tool in library.get("tools", []):
+                tool["library_name"] = library.get("name", "Unknown Library")
+                tool["library_id"] = library.get("id", "unknown")
+                all_tools.append(tool)
+        
+        # Apply advanced search criteria
+        filtered_tools = _apply_advanced_search_criteria(all_tools, search_criteria)
+        
+        # Sort results
+        sorted_tools = _sort_advanced_results(filtered_tools, sort_by, sort_order)
+        
+        # Apply limit
+        if limit and len(sorted_tools) > limit:
+            sorted_tools = sorted_tools[:limit]
+        
+        # Group results if requested
+        if group_by:
+            grouped_results = _group_search_results(sorted_tools, group_by)
+            return {
+                "search_criteria": search_criteria,
+                "sort_by": sort_by,
+                "sort_order": sort_order,
+                "group_by": group_by,
+                "total_results": len(sorted_tools),
+                "grouped_results": grouped_results
+            }
+        else:
+            return {
+                "search_criteria": search_criteria,
+                "sort_by": sort_by,
+                "sort_order": sort_order,
+                "total_results": len(sorted_tools),
+                "tools": sorted_tools
+            }
+        
+    except Exception as e:
+        return {
+            "error": True,
+            "message": f"Error in advanced search: {str(e)}",
+            "code": "ADVANCED_SEARCH_ERROR"
+        }
+
 def handle_get_search_suggestions(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Get search suggestions based on partial query.
+    
+    NOTE: This is a READ-ONLY operation - calls impl directly without task_queue.
     
     Args:
         path: Request path
@@ -242,86 +267,8 @@ def handle_get_search_suggestions(path: str, method: str, data: Dict[str, Any]) 
         suggestion_type = data.get("suggestion_type", "all")  # all, names, types, materials
         limit = data.get("limit", 10)
         
-        result = {}
-        
-        def execute_get_search_suggestions():
-            nonlocal result
-            try:
-                from ....tool_library import list_tools_in_libraries
-                
-                # Get all tools from libraries
-                tools_data = list_tools_in_libraries()
-                
-                if tools_data.get("error"):
-                    result = tools_data
-                    return
-                
-                # Collect suggestion data
-                suggestions = {
-                    "names": set(),
-                    "types": set(),
-                    "materials": set(),
-                    "coatings": set()
-                }
-                
-                for library in tools_data.get("libraries", []):
-                    for tool in library.get("tools", []):
-                        # Tool names
-                        name = tool.get("name", "")
-                        if name and partial_query.lower() in name.lower():
-                            suggestions["names"].add(name)
-                        
-                        # Tool types
-                        tool_type = tool.get("type", "")
-                        if tool_type and partial_query.lower() in tool_type.lower():
-                            suggestions["types"].add(tool_type)
-                        
-                        # Materials
-                        material = tool.get("material", "")
-                        if material and partial_query.lower() in material.lower():
-                            suggestions["materials"].add(material)
-                        
-                        # Coatings
-                        coating = tool.get("coating", "")
-                        if coating and partial_query.lower() in coating.lower():
-                            suggestions["coatings"].add(coating)
-                
-                # Convert sets to sorted lists and apply limits
-                formatted_suggestions = {}
-                
-                if suggestion_type in ["all", "names"]:
-                    formatted_suggestions["names"] = sorted(list(suggestions["names"]))[:limit]
-                
-                if suggestion_type in ["all", "types"]:
-                    formatted_suggestions["types"] = sorted(list(suggestions["types"]))[:limit]
-                
-                if suggestion_type in ["all", "materials"]:
-                    formatted_suggestions["materials"] = sorted(list(suggestions["materials"]))[:limit]
-                
-                if suggestion_type in ["all", "coatings"]:
-                    formatted_suggestions["coatings"] = sorted(list(suggestions["coatings"]))[:limit]
-                
-                result = {
-                    "partial_query": partial_query,
-                    "suggestion_type": suggestion_type,
-                    "suggestions": formatted_suggestions
-                }
-                
-            except Exception as e:
-                result = {
-                    "error": True,
-                    "message": f"Error getting search suggestions: {str(e)}",
-                    "code": "SEARCH_SUGGESTIONS_ERROR"
-                }
-        
-        task_queue.queue_task(
-            "get_search_suggestions",
-            priority=TaskPriority.NORMAL,
-            module_context="manufacture.tool_libraries.search",
-            callback=execute_get_search_suggestions
-        )
-        
-        task_queue.process_tasks()
+        # READ-ONLY: Call suggestions logic directly (no task_queue needed)
+        result = _get_search_suggestions_impl(partial_query, suggestion_type, limit)
         
         return {
             "status": 200 if not result.get("error") else 500,
@@ -336,6 +283,86 @@ def handle_get_search_suggestions(path: str, method: str, data: Dict[str, Any]) 
             "error": True,
             "message": f"Handler error: {str(e)}",
             "headers": {"Content-Type": "application/json"}
+        }
+
+
+def _get_search_suggestions_impl(partial_query: str, suggestion_type: str, limit: int) -> Dict[str, Any]:
+    """
+    Implementation of search suggestions logic.
+    
+    Args:
+        partial_query: Partial query string to match
+        suggestion_type: Type of suggestions (all, names, types, materials)
+        limit: Maximum suggestions per category
+        
+    Returns:
+        Search suggestions dictionary
+    """
+    try:
+        from ....tool_library import list_tools_in_libraries
+        
+        # Get all tools from libraries
+        tools_data = list_tools_in_libraries()
+        
+        if tools_data.get("error"):
+            return tools_data
+        
+        # Collect suggestion data
+        suggestions = {
+            "names": set(),
+            "types": set(),
+            "materials": set(),
+            "coatings": set()
+        }
+        
+        for library in tools_data.get("libraries", []):
+            for tool in library.get("tools", []):
+                # Tool names
+                name = tool.get("name", "")
+                if name and partial_query.lower() in name.lower():
+                    suggestions["names"].add(name)
+                
+                # Tool types
+                tool_type = tool.get("type", "")
+                if tool_type and partial_query.lower() in tool_type.lower():
+                    suggestions["types"].add(tool_type)
+                
+                # Materials
+                material = tool.get("material", "")
+                if material and partial_query.lower() in material.lower():
+                    suggestions["materials"].add(material)
+                
+                # Coatings
+                coating = tool.get("coating", "")
+                if coating and partial_query.lower() in coating.lower():
+                    suggestions["coatings"].add(coating)
+        
+        # Convert sets to sorted lists and apply limits
+        formatted_suggestions = {}
+        
+        if suggestion_type in ["all", "names"]:
+            formatted_suggestions["names"] = sorted(list(suggestions["names"]))[:limit]
+        
+        if suggestion_type in ["all", "types"]:
+            formatted_suggestions["types"] = sorted(list(suggestions["types"]))[:limit]
+        
+        if suggestion_type in ["all", "materials"]:
+            formatted_suggestions["materials"] = sorted(list(suggestions["materials"]))[:limit]
+        
+        if suggestion_type in ["all", "coatings"]:
+            formatted_suggestions["coatings"] = sorted(list(suggestions["coatings"]))[:limit]
+        
+        return {
+            "partial_query": partial_query,
+            "suggestion_type": suggestion_type,
+            "suggestions": formatted_suggestions
+        }
+        
+    except Exception as e:
+        return {
+            "error": True,
+            "message": f"Error getting search suggestions: {str(e)}",
+            "code": "SEARCH_SUGGESTIONS_ERROR"
         }
 
 def _apply_search_filters(tools: List[Dict], query: str, tool_type: str, diameter_min: float,

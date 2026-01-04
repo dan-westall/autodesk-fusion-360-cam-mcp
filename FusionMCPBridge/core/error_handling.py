@@ -58,9 +58,9 @@ class ModuleLoggerAdapter(logging.LoggerAdapter):
     """LoggerAdapter that adds module context to log records without global state."""
     
     def process(self, msg, kwargs):
-        """Add module_name to the extra dict for each log message."""
+        """Add fusion_module to the extra dict for each log message."""
         extra = kwargs.get('extra', {})
-        extra['module_name'] = self.extra.get('module_name', 'unknown')
+        extra['fusion_module'] = self.extra.get('module_name', 'unknown')
         kwargs['extra'] = extra
         return msg, kwargs
 
@@ -82,7 +82,7 @@ class ModuleLogger:
         
         # Create formatter with module context
         formatter = logging.Formatter(
-            '%(asctime)s - %(name)s - %(levelname)s - [%(module_name)s] - %(message)s'
+            '%(asctime)s - %(name)s - %(levelname)s - [%(fusion_module)s] - %(message)s'
         )
         
         # Add console handler if not already present

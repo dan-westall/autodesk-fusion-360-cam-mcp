@@ -29,6 +29,13 @@ def register_tools(mcp_instance: FastMCP):
     mcp.tool()(list_toolpaths_with_heights)
     mcp.tool()(analyze_toolpath_sequence)
 
+# @mcp.tool(
+#     annotations={
+#         "title": "List Cam ToolPaths",
+#         "readOnlyHint": True,
+#         "openWorldHint": False
+#     }
+# )
 def list_cam_toolpaths():
     """
     You can list all CAM toolpath operations in the current Fusion 360 document.

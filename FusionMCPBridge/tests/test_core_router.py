@@ -281,5 +281,95 @@ class TestGlobalRequestRouter:
         assert isinstance(request_router, RequestRouter)
 
 
+class TestQueryParameterHandling:
+    """Test query parameter handling in routing."""
+    
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.router = RequestRouter()
+    
+    def test_route_request_with_query_params(self):
+        """Test routing with query parameters in path."""
+        def handler_with_query(path, method, data):
+            return {"status": 200, "data": {"include_toolpaths": data.get("include_toolpaths")}}
+        
+        self.router.register_handler(
+            pattern="/cam/setups",
+            handler=handler_with_query,
+            methods=["GET"],
+            category="manufacture",
+            module_name="setups"
+        )
+        
+        # Test with query parameters
+        response = self.router.route_request("/cam/setups?include_toolpaths=True", "GET", {})
+        
+        assert response["status"] == 200
+        assert response["data"]["include_toolpaths"] == "True"
+    
+    def test_route_request_multiple_query_params(self):
+        """Test routing with multiple query parameters."""
+        def handler_with_query(path, method, data):
+            return {"status": 200, "data": {
+                "param1": data.get("param1"),
+                "param2": data.get("param2")
+            }}
+        
+        self.router.register_handler(
+            pattern="/test",
+            handler=handler_with_query,
+            methods=["GET"],
+            category="test",
+            module_name="test_module"
+        )
+        
+        response = self.router.route_request("/test?param1=value1&param2=value2", "GET", {})
+        
+        assert response["status"] == 200
+        assert response["data"]["param1"] == "value1"
+        assert response["data"]["param2"] == "value2"
+    
+    def test_query_params_dont_override_body_data(self):
+        """Test that query parameters don't override POST body data."""
+        def handler_with_data(path, method, data):
+            return {"status": 200, "data": {"key": data.get("key")}}
+        
+        self.router.register_handler(
+            pattern="/test",
+            handler=handler_with_data,
+            methods=["POST"],
+            category="test",
+            module_name="test_module"
+        )
+        
+        # Body data should take precedence
+        response = self.router.route_request("/test?key=query_value", "POST", {"key": "body_value"})
+        
+        assert response["status"] == 200
+        assert response["data"]["key"] == "body_value"
+    
+    def test_route_with_path_params_and_query_params(self):
+        """Test routing with both path parameters and query parameters."""
+        def handler_with_both(path, method, data):
+            return {"status": 200, "data": {
+                "setup_id": data.get("setup_id"),
+                "include_details": data.get("include_details")
+            }}
+        
+        self.router.register_handler(
+            pattern="/cam/setups/{setup_id}",
+            handler=handler_with_both,
+            methods=["GET"],
+            category="manufacture",
+            module_name="setups"
+        )
+        
+        response = self.router.route_request("/cam/setups/setup_001?include_details=true", "GET", {})
+        
+        assert response["status"] == 200
+        assert response["data"]["setup_id"] == "setup_001"
+        assert response["data"]["include_details"] == "true"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

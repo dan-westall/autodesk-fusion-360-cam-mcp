@@ -229,3 +229,97 @@ from core.config import get_base_url, get_endpoints
 2. Create test file in the appropriate `tests/` directory
 3. Use correct import path for that component's `core/` module
 4. Run tests for that directory only to verify
+
+## 8. Live Integration Tests (CRITICAL for Active Development)
+
+### The Testing Gap
+Unit tests using the Humble Object Pattern cannot catch certain runtime issues:
+- **Task queue callback bugs**: Handlers using the broken `task_queue` callback pattern return empty `{}`
+- **HTTP endpoint routing issues**: Actual request/response behavior
+- **Real API behavior**: Differences between mocked and actual Fusion 360 responses
+
+### Integration Test Suite
+Location: `FusionMCPBridge/tests/test_live_*.py`
+
+These tests make **real HTTP requests** to the running Fusion 360 add-in and catch issues that unit tests miss.
+
+### Prerequisites
+1. Fusion 360 running
+2. FusionMCPBridge add-in active
+3. A document with setups open (for MANUFACTURE workspace tests)
+
+### Running Integration Tests
+Integration tests are **skipped by default**. Use the `--integration` flag to run them:
+
+```bash
+# Run all integration tests (requires Fusion 360 running)
+uv run pytest FusionMCPBridge/tests/ -v --integration
+
+# Run only smoke tests (quick validation)
+uv run pytest FusionMCPBridge/tests/ -v --integration -m "smoke"
+
+# Run only MANUFACTURE workspace tests
+uv run pytest FusionMCPBridge/tests/ -v --integration -m "manufacture"
+
+# Run only Design workspace tests
+uv run pytest FusionMCPBridge/tests/ -v --integration -m "design"
+
+# Skip destructive tests (that modify Fusion 360 state)
+uv run pytest FusionMCPBridge/tests/ -v --integration -m "not destructive"
+
+# Run unit tests only (integration tests skipped)
+uv run pytest FusionMCPBridge/tests/ -v
+```
+
+### What Integration Tests Catch
+- ✅ Empty `{}` responses from broken task_queue callback patterns
+- ✅ HTTP endpoint routing issues
+- ✅ Response structure validation
+- ✅ Real API behavior vs mocked behavior
+- ✅ Handler registration problems
+
+### The Task Queue Callback Bug
+This is the specific bug that integration tests catch:
+
+**BROKEN Pattern** (returns empty `{}`):
+```python
+def handle_list_setups(path, method, data):
+    result = {}
+    def callback():
+        nonlocal result
+        result = list_setups_detailed()  # Never executes!
+    task_queue.queue_task(..., callback=callback)
+    return {"data": result}  # Returns empty {}
+```
+
+**CORRECT Pattern** (for read-only operations):
+```python
+def handle_list_setups(path, method, data):
+    # Call impl directly - no task_queue for read-only operations
+    result = list_setups_detailed()
+    return {"data": result}
+```
+
+### Development Workflow with Integration Tests
+1. Make code changes to handlers
+2. Restart add-in: `curl http://localhost:5002/addon/restart`
+3. Run smoke tests: `uv run pytest FusionMCPBridge/tests/ -v --integration -m "smoke"`
+4. If smoke tests pass, run full integration test suite
+5. Fix any failures before committing
+
+### Test Categories
+
+| Test Class | Purpose |
+|------------|---------|
+| `TestSmokeTests` | Quick validation that basic endpoints work |
+| `TestEmptyResponseDetection` | Catches task_queue callback bugs |
+| `TestSetupManagementLive` | CAM setup endpoint validation |
+| `TestToolpathLive` | Toolpath endpoint validation |
+| `TestToolLibraryLive` | Tool library endpoint validation |
+| `TestPartPositionLive` | Part position endpoint validation |
+
+### When to Run Live Tests
+- **Always**: Before committing handler changes
+- **Always**: After fixing task_queue related bugs
+- **Always**: When adding new HTTP endpoints
+- **Recommended**: As part of development workflow after add-in restart

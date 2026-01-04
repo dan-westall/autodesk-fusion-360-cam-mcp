@@ -5,9 +5,11 @@ This package provides the interface to MANUFACTURE workspace (CAM) functionality
 Business logic is organized into modular submodules:
 
 - cam_utils.py - Shared CAM utilities
-- setups.py - Setup management
-- stock.py - Stock configuration
-- wcs.py - Work Coordinate System configuration
+- setups/ - Setup management (modular subpackage)
+  - setup.py - Core setup management functions
+  - stock.py - Stock configuration functions
+  - wcs.py - Work Coordinate System configuration
+  - part_position.py - Part position functions
 - operations/ - Operation-level functionality
   - toolpaths.py - Toolpath operations
   - heights.py - Height parameters and validation
@@ -20,12 +22,12 @@ This __init__.py re-exports commonly used functions for convenient access.
 """
 
 # Import submodules to ensure handler registration
-from . import setups
+from . import cam_utils
 from . import operations
 from . import tool_libraries
-from . import stock
-from . import wcs
-from . import cam_utils
+
+# Import the new modular setups subpackage
+from . import setups
 
 # =============================================================================
 # Re-export from cam_utils
@@ -76,18 +78,19 @@ from .operations.tools import (
 )
 
 # =============================================================================
-# Re-export from setups handler
+# Re-export from setups subpackage (modular structure)
 # =============================================================================
 from .setups import (
+    # Core setup functions
     list_setups_detailed,
     get_setup_by_id_impl as get_setup_by_id,
     create_setup_impl as create_setup,
 )
 
 # =============================================================================
-# Re-export from stock handler
+# Re-export from setups/stock module
 # =============================================================================
-from .stock import (
+from .setups.stock import (
     configure_stock,
     validate_stock_configuration,
     configure_automatic_stock,
@@ -98,13 +101,22 @@ from .stock import (
 )
 
 # =============================================================================
-# Re-export from WCS handler
+# Re-export from setups/wcs module
 # =============================================================================
-from .wcs import (
+from .setups.wcs import (
     configure_wcs,
     validate_wcs_configuration,
     integrate_model_id_with_wcs,
     validate_orientation_vectors,
+)
+
+# =============================================================================
+# Re-export from setups/part_position module
+# =============================================================================
+from .setups.part_position import (
+    get_part_position_impl as get_part_position,
+    set_part_position_impl as set_part_position,
+    validate_part_position,
 )
 
 __all__ = [
@@ -112,8 +124,6 @@ __all__ = [
     'setups',
     'operations',
     'tool_libraries',
-    'stock',
-    'wcs',
     'cam_utils',
     # CAM utilities
     'get_cam_product',
@@ -155,4 +165,8 @@ __all__ = [
     'validate_wcs_configuration',
     'integrate_model_id_with_wcs',
     'validate_orientation_vectors',
+    # Part Position
+    'get_part_position',
+    'set_part_position',
+    'validate_part_position',
 ]

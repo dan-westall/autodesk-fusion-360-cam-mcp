@@ -957,3 +957,7 @@ def register_handlers():
         
     except Exception as e:
         logger.error(f"Error registering toolpath handlers: {str(e)}")
+
+
+# Auto-register handlers when module is imported
+register_handlers()

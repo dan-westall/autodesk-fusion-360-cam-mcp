@@ -75,6 +75,14 @@ _ENDPOINTS = {
         "cam_setup_duplicate": f"{_BASE_URL}/cam/setups",  # /{setup_id}/duplicate
         "cam_setup_toolpaths": f"{_BASE_URL}/cam/setups",  # /{setup_id}/toolpaths
         "cam_setup_wcs": f"{_BASE_URL}/cam/setups",  # /{setup_id}/wcs
+        "cam_setup_part_position": f"{_BASE_URL}/cam/setups",  # /{setup_id}/part-position
+        
+        # Setup-Toolpath Integration (Task 10.6)
+        "cam_toolpath_setup": f"{_BASE_URL}/cam/toolpaths",  # /{toolpath_id}/setup
+        "cam_setup_toolpath_validate": f"{_BASE_URL}/cam/setups",  # /{setup_id}/toolpaths/{toolpath_id}/validate
+        "cam_setup_toolpath_mapping": f"{_BASE_URL}/cam/setup-toolpath-mapping",
+        "cam_toolpath_move": f"{_BASE_URL}/cam/toolpaths",  # /{toolpath_id}/move
+        "cam_toolpath_with_context": f"{_BASE_URL}/cam/toolpaths",  # /{toolpath_id}/with-setup-context
         
         # Tool management (operations have tools, not standalone /cam/tool endpoint)
         "cam_tools": f"{_BASE_URL}/cam/tools",

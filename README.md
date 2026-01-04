@@ -291,6 +291,52 @@ curl http://localhost:5002/addon/status
 
 ---
 
+## 🧪 Testing
+
+### Unit Tests (No Fusion Required)
+Run unit tests that don't require Fusion 360:
+
+```bash
+# Server tests
+uv run pytest Server/tests/ -v
+
+# Bridge tests (excluding live tests)
+uv run pytest FusionMCPBridge/tests/ -v -m "not live"
+```
+
+### Live Integration Tests (Fusion Required)
+These tests make real HTTP requests to the running add-in and catch issues that unit tests can't detect (like the task_queue callback pattern bug).
+
+**Prerequisites:**
+1. Fusion 360 running
+2. FusionMCPBridge add-in active
+3. A CAM document open (for CAM-specific tests)
+
+```bash
+# Run all live tests
+uv run pytest FusionMCPBridge/tests/test_live_integration.py -v
+
+# Run only smoke tests (quick validation)
+uv run pytest FusionMCPBridge/tests/test_live_integration.py::TestSmokeTests -v
+
+# Run empty response detection tests (catches task_queue bugs)
+uv run pytest FusionMCPBridge/tests/test_live_integration.py::TestEmptyResponseDetection -v
+```
+
+**What Live Tests Catch:**
+- Empty `{}` responses from broken task_queue patterns
+- HTTP endpoint routing issues
+- Response structure validation
+- Real API behavior vs mocked behavior
+
+**Development Workflow with Live Tests:**
+1. Make code changes
+2. Restart add-in: `curl http://localhost:5002/addon/restart`
+3. Run smoke tests: `uv run pytest FusionMCPBridge/tests/test_live_integration.py::TestSmokeTests -v`
+4. If smoke tests pass, run full live test suite
+
+---
+
 ## 🛠️ Available Tools
 
 ---
