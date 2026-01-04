@@ -23,46 +23,29 @@ import json
 from typing import Dict, Any, Optional
 
 # =============================================================================
-# Configuration
+# Configuration and Helpers
 # =============================================================================
 
-BRIDGE_BASE_URL = "http://localhost:5001"
+# Import shared helpers from helpers.py
+from .helpers import BRIDGE_BASE_URL, is_bridge_running, make_request as _make_request
+
 REQUEST_TIMEOUT = 10  # seconds
 
 
-# =============================================================================
-# Fixtures and Helpers
-# =============================================================================
-
-def is_bridge_running() -> bool:
-    """Check if the Fusion 360 bridge is running and accessible."""
-    try:
-        response = requests.get(f"{BRIDGE_BASE_URL}/test_connection", timeout=2)
-        return response.status_code == 200
-    except requests.exceptions.RequestException:
-        return False
-
-
-def make_request(
+def make_request_parsed(
     endpoint: str,
     method: str = "GET",
     data: Optional[Dict[str, Any]] = None,
     timeout: int = REQUEST_TIMEOUT
 ) -> Dict[str, Any]:
-    """Make an HTTP request to the bridge and return parsed response."""
-    url = f"{BRIDGE_BASE_URL}{endpoint}"
+    """
+    Make an HTTP request to the bridge and return parsed response dict.
     
+    This is a wrapper around helpers.make_request() that returns the parsed
+    dict format expected by the integration tests.
+    """
     try:
-        if method.upper() == "GET":
-            response = requests.get(url, params=data, timeout=timeout)
-        elif method.upper() == "POST":
-            response = requests.post(url, json=data, timeout=timeout)
-        elif method.upper() == "PUT":
-            response = requests.put(url, json=data, timeout=timeout)
-        elif method.upper() == "DELETE":
-            response = requests.delete(url, json=data, timeout=timeout)
-        else:
-            raise ValueError(f"Unsupported HTTP method: {method}")
+        response = _make_request(endpoint, method, data, timeout)
         
         # Try to parse JSON response
         try:
@@ -104,12 +87,12 @@ class TestBridgeConnection:
     
     def test_bridge_is_reachable(self, bridge_available):
         """Test that the bridge responds to requests."""
-        result = make_request("/test_connection")
+        result = make_request_parsed("/test_connection")
         assert result["success"], f"Bridge not reachable: {result}"
     
     def test_response_is_not_empty(self, bridge_available):
         """Test that responses are not empty (catches task_queue bug)."""
-        result = make_request("/test_connection")
+        result = make_request_parsed("/test_connection")
         assert result["response"] != {}, "Response should not be empty dict"
         assert result["response"] is not None, "Response should not be None"
 
@@ -128,7 +111,7 @@ class TestSetupManagementLive:
         This test catches the task_queue callback pattern bug where
         handlers using the broken pattern return empty responses.
         """
-        result = make_request("/cam/setups")
+        result = make_request_parsed("/cam/setups")
         
         # Response should not be empty
         assert result["response"] != {}, (
@@ -152,7 +135,7 @@ class TestSetupManagementLive:
     
     def test_list_setups_response_structure(self, bridge_available):
         """Test that list setups response has correct structure."""
-        result = make_request("/cam/setups")
+        result = make_request_parsed("/cam/setups")
         
         if not result["success"]:
             # If CAM isn't available, that's a valid error response
@@ -170,7 +153,7 @@ class TestSetupManagementLive:
     
     def test_get_setup_with_invalid_id(self, bridge_available):
         """Test that get setup with invalid ID returns proper error."""
-        result = make_request("/cam/setups/nonexistent_setup_id_12345")
+        result = make_request_parsed("/cam/setups/nonexistent_setup_id_12345")
         
         # Should not be empty
         assert result["response"] != {}, "Response should not be empty"
@@ -198,7 +181,7 @@ class TestToolpathLive:
     
     def test_list_toolpaths_returns_data(self, bridge_available):
         """Test that /cam/toolpaths returns actual data."""
-        result = make_request("/cam/toolpaths")
+        result = make_request_parsed("/cam/toolpaths")
         
         assert result["response"] != {}, (
             "CRITICAL: /cam/toolpaths returned empty {}. "
@@ -207,7 +190,7 @@ class TestToolpathLive:
     
     def test_toolpaths_response_structure(self, bridge_available):
         """Test toolpaths response has expected structure."""
-        result = make_request("/cam/toolpaths")
+        result = make_request_parsed("/cam/toolpaths")
         
         response = result["response"]
         
@@ -230,7 +213,7 @@ class TestToolLibraryLive:
     
     def test_list_tool_libraries_returns_data(self, bridge_available):
         """Test that /tool-libraries returns actual data."""
-        result = make_request("/tool-libraries")
+        result = make_request_parsed("/tool-libraries")
         
         assert result["response"] != {}, (
             "CRITICAL: /tool-libraries returned empty {}."
@@ -238,7 +221,7 @@ class TestToolLibraryLive:
     
     def test_tool_libraries_response_structure(self, bridge_available):
         """Test tool libraries response has expected structure."""
-        result = make_request("/tool-libraries")
+        result = make_request_parsed("/tool-libraries")
         
         response = result["response"]
         has_structure = (
@@ -280,7 +263,7 @@ class TestEmptyResponseDetection:
     @pytest.mark.parametrize("endpoint,method", ENDPOINTS_TO_CHECK)
     def test_endpoint_not_empty(self, bridge_available, endpoint, method):
         """Test that endpoint does not return empty response."""
-        result = make_request(endpoint, method)
+        result = make_request_parsed(endpoint, method)
         
         assert result["response"] != {}, (
             f"CRITICAL: {method} {endpoint} returned empty {{}}. "
@@ -291,7 +274,7 @@ class TestEmptyResponseDetection:
     @pytest.mark.parametrize("endpoint,method", ENDPOINTS_TO_CHECK)
     def test_endpoint_has_content(self, bridge_available, endpoint, method):
         """Test that endpoint response has meaningful content."""
-        result = make_request(endpoint, method)
+        result = make_request_parsed(endpoint, method)
         response = result["response"]
         
         # Response should have at least one key with content
@@ -318,7 +301,7 @@ class TestPartPositionLive:
     
     def test_get_part_position_with_invalid_setup(self, bridge_available):
         """Test get part position with invalid setup ID."""
-        result = make_request("/cam/setups/invalid_id/part-position")
+        result = make_request_parsed("/cam/setups/invalid_id/part-position")
         
         assert result["response"] != {}, "Response should not be empty"
         
@@ -344,17 +327,17 @@ class TestSmokeTests:
     
     def test_bridge_responds(self, bridge_available):
         """Verify bridge is responding."""
-        result = make_request("/test_connection")
+        result = make_request_parsed("/test_connection")
         assert result["status_code"] is not None
     
     def test_cam_setups_not_broken(self, bridge_available):
         """Quick check that CAM setups endpoint works."""
-        result = make_request("/cam/setups")
+        result = make_request_parsed("/cam/setups")
         assert result["response"] != {}, "CAM setups endpoint is broken (empty response)"
     
     def test_cam_toolpaths_not_broken(self, bridge_available):
         """Quick check that CAM toolpaths endpoint works."""
-        result = make_request("/cam/toolpaths")
+        result = make_request_parsed("/cam/toolpaths")
         assert result["response"] != {}, "CAM toolpaths endpoint is broken (empty response)"
 
 
