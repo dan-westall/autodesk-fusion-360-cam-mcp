@@ -6,13 +6,17 @@ import adsk.fusion
 import json
 from typing import Dict, Any, Optional
 
+# Import centralized task queue
+from ...core.task_queue import task_queue
+from ...core.error_handling import error_handler_decorator, ErrorCategory, ErrorSeverity
+
 
 # =============================================================================
 # Body Lookup Functions
 # =============================================================================
 
 def find_body_by_id(body_id: str) -> Optional[adsk.fusion.BRepBody]:
-    """Find a body in the design workspace by its entity token ID."""
+    """Find a body in the Design workspace by its entity token ID."""
     try:
         app = adsk.core.Application.get()
         if not app:
@@ -45,6 +49,7 @@ def find_body_by_id(body_id: str) -> Optional[adsk.fusion.BRepBody]:
 # HTTP Handler Functions
 # =============================================================================
 
+@error_handler_decorator("design.utilities", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_set_parameter(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle parameter setting operation
@@ -57,14 +62,11 @@ def handle_set_parameter(path: str, method: str, data: Dict[str, Any]) -> Dict[s
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     name = data.get('name')
     value = data.get('value')
     
     if name and value:
-        FusionMCPBridge.task_queue.put(('set_parameter', name, value))
+        task_queue.queue_task('set_parameter', name, value, module_context="design.utilities")
         return {
             "status": 200,
             "data": {"message": f"Parameter {name} wird gesetzt"},
@@ -77,6 +79,8 @@ def handle_set_parameter(path: str, method: str, data: Dict[str, Any]) -> Dict[s
             "headers": {"Content-Type": "application/json"}
         }
 
+
+@error_handler_decorator("design.utilities", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.LOW)
 def handle_list_parameters(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle parameter listing operation
@@ -89,7 +93,7 @@ def handle_list_parameters(path: str, method: str, data: Dict[str, Any]) -> Dict
     Returns:
         Response dictionary with parameter list
     """
-    # Import here to avoid circular imports
+    # Import here to avoid circular imports - need access to ModelParameterSnapshot
     from ... import FusionMCPBridge
     
     return {
@@ -98,6 +102,8 @@ def handle_list_parameters(path: str, method: str, data: Dict[str, Any]) -> Dict
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.utilities", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.LOW)
 def handle_count_parameters(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle parameter count operation
@@ -110,7 +116,7 @@ def handle_count_parameters(path: str, method: str, data: Dict[str, Any]) -> Dic
     Returns:
         Response dictionary with parameter count
     """
-    # Import here to avoid circular imports
+    # Import here to avoid circular imports - need access to ModelParameterSnapshot
     from ... import FusionMCPBridge
     
     return {
@@ -119,6 +125,8 @@ def handle_count_parameters(path: str, method: str, data: Dict[str, Any]) -> Dic
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.utilities", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_select_body(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle body selection operation
@@ -131,18 +139,17 @@ def handle_select_body(path: str, method: str, data: Dict[str, Any]) -> Dict[str
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     name = str(data.get('name', ''))
     
-    FusionMCPBridge.task_queue.put(('select_body', name))
+    task_queue.queue_task('select_body', name, module_context="design.utilities")
     return {
         "status": 200,
         "data": {"message": "Body wird ausgewählt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.utilities", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_select_sketch(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle sketch selection operation
@@ -155,18 +162,17 @@ def handle_select_sketch(path: str, method: str, data: Dict[str, Any]) -> Dict[s
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     name = str(data.get('name', ''))
     
-    FusionMCPBridge.task_queue.put(('select_sketch', name))
+    task_queue.queue_task('select_sketch', name, module_context="design.utilities")
     return {
         "status": 200,
         "data": {"message": "Sketch wird ausgewählt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.utilities", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_export_step(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle STEP export operation
@@ -179,18 +185,17 @@ def handle_export_step(path: str, method: str, data: Dict[str, Any]) -> Dict[str
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     name = str(data.get('name', 'Test.step'))
     
-    FusionMCPBridge.task_queue.put(('export_step', name))
+    task_queue.queue_task('export_step', name, module_context="design.utilities")
     return {
         "status": 200,
         "data": {"message": "STEP Export gestartet"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.utilities", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_export_stl(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle STL export operation
@@ -203,18 +208,17 @@ def handle_export_stl(path: str, method: str, data: Dict[str, Any]) -> Dict[str,
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     name = str(data.get('Name', 'Test.stl'))
     
-    FusionMCPBridge.task_queue.put(('export_stl', name))
+    task_queue.queue_task('export_stl', name, module_context="design.utilities")
     return {
         "status": 200,
         "data": {"message": "STL Export gestartet"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.utilities", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.LOW)
 def handle_undo(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle undo operation
@@ -227,16 +231,15 @@ def handle_undo(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
-    FusionMCPBridge.task_queue.put(('undo',))
+    task_queue.queue_task('undo', module_context="design.utilities")
     return {
         "status": 200,
         "data": {"message": "Undo wird ausgeführt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.utilities", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.HIGH)
 def handle_delete_everything(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle delete everything operation
@@ -249,16 +252,15 @@ def handle_delete_everything(path: str, method: str, data: Dict[str, Any]) -> Di
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
-    FusionMCPBridge.task_queue.put(('delete_everything',))
+    task_queue.queue_task('delete_everything', module_context="design.utilities")
     return {
         "status": 200,
         "data": {"message": "Alle Bodies werden gelöscht"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.utilities", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.LOW)
 def handle_test_connection(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle test connection operation

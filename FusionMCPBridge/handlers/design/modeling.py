@@ -4,6 +4,12 @@
 import json
 from typing import Dict, Any
 
+# Import centralized task queue
+from ...core.task_queue import task_queue
+from ...core.error_handling import error_handler_decorator, ErrorCategory, ErrorSeverity
+
+
+@error_handler_decorator("design.modeling", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_extrude_last_sketch(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle extrusion of the last sketch
@@ -16,19 +22,18 @@ def handle_extrude_last_sketch(path: str, method: str, data: Dict[str, Any]) -> 
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     value = float(data.get('value', 1.0))
     taperangle = float(data.get('taperangle', 0.0))
     
-    FusionMCPBridge.task_queue.put(('extrude_last_sketch', value, taperangle))
+    task_queue.queue_task('extrude_last_sketch', value, taperangle, module_context="design.modeling")
     return {
         "status": 200,
         "data": {"message": "Letzter Sketch wird extrudiert"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.modeling", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_cut_extrude(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle cut extrusion operation
@@ -41,18 +46,17 @@ def handle_cut_extrude(path: str, method: str, data: Dict[str, Any]) -> Dict[str
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     depth = float(data.get('depth', 1.0))
     
-    FusionMCPBridge.task_queue.put(('cut_extrude', depth))
+    task_queue.queue_task('cut_extrude', depth, module_context="design.modeling")
     return {
         "status": 200,
         "data": {"message": "Cut Extrude wird erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.modeling", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_extrude_thin(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle thin extrusion operation
@@ -65,19 +69,18 @@ def handle_extrude_thin(path: str, method: str, data: Dict[str, Any]) -> Dict[st
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     thickness = float(data.get('thickness', 0.5))
     distance = float(data.get('distance', 1.0))
     
-    FusionMCPBridge.task_queue.put(('extrude_thin', thickness, distance))
+    task_queue.queue_task('extrude_thin', thickness, distance, module_context="design.modeling")
     return {
         "status": 200,
         "data": {"message": "Thin Extrude wird erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.modeling", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_revolve(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle revolve operation
@@ -90,18 +93,17 @@ def handle_revolve(path: str, method: str, data: Dict[str, Any]) -> Dict[str, An
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     angle = float(data.get('angle', 360))
     
-    FusionMCPBridge.task_queue.put(('revolve_profile', angle))
+    task_queue.queue_task('revolve_profile', angle, module_context="design.modeling")
     return {
         "status": 200,
         "data": {"message": "Profil wird revolviert"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.modeling", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_loft(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle loft operation between sketches
@@ -114,18 +116,17 @@ def handle_loft(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     sketchcount = int(data.get('sketchcount', 2))
     
-    FusionMCPBridge.task_queue.put(('loft', sketchcount))
+    task_queue.queue_task('loft', sketchcount, module_context="design.modeling")
     return {
         "status": 200,
         "data": {"message": "Loft wird erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.modeling", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_sweep(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle sweep operation
@@ -138,16 +139,15 @@ def handle_sweep(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
-    FusionMCPBridge.task_queue.put(('sweep',))
+    task_queue.queue_task('sweep', module_context="design.modeling")
     return {
         "status": 200,
         "data": {"message": "Sweep wird erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.modeling", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_boolean_operation(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle boolean operations (join, cut, intersect)
@@ -160,18 +160,17 @@ def handle_boolean_operation(path: str, method: str, data: Dict[str, Any]) -> Di
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     operation = data.get('operation', 'join')  # 'join', 'cut', 'intersect'
     
-    FusionMCPBridge.task_queue.put(('boolean_operation', operation))
+    task_queue.queue_task('boolean_operation', operation, module_context="design.modeling")
     return {
         "status": 200,
         "data": {"message": "Boolean Operation wird ausgeführt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.modeling", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_shell_body(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle shell body operation
@@ -184,19 +183,18 @@ def handle_shell_body(path: str, method: str, data: Dict[str, Any]) -> Dict[str,
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     thickness = float(data.get('thickness', 0.5))
     faceindex = int(data.get('faceindex', 0))
     
-    FusionMCPBridge.task_queue.put(('shell_body', thickness, faceindex))
+    task_queue.queue_task('shell_body', thickness, faceindex, module_context="design.modeling")
     return {
         "status": 200,
         "data": {"message": "Shell body wird erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.modeling", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_move_body(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle body movement operation
@@ -209,20 +207,19 @@ def handle_move_body(path: str, method: str, data: Dict[str, Any]) -> Dict[str, 
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     x = float(data.get('x', 0))
     y = float(data.get('y', 0))
     z = float(data.get('z', 0))
     
-    FusionMCPBridge.task_queue.put(('move_body', x, y, z))
+    task_queue.queue_task('move_body', x, y, z, module_context="design.modeling")
     return {
         "status": 200,
         "data": {"message": "Body wird verschoben"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.modeling", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_offsetplane(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle offset plane creation
@@ -235,13 +232,10 @@ def handle_offsetplane(path: str, method: str, data: Dict[str, Any]) -> Dict[str
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     offset = float(data.get('offset', 0.0))
     plane = data.get('plane', 'XY')  # 'XY', 'XZ', 'YZ'
     
-    FusionMCPBridge.task_queue.put(('offsetplane', offset, plane))
+    task_queue.queue_task('offsetplane', offset, plane, module_context="design.modeling")
     return {
         "status": 200,
         "data": {"message": "Offset Plane wird erstellt"},

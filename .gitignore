@@ -140,3 +140,4 @@ Thumbs.db
 *.log
 .kiro/settings/mcp.json
 .kiro/settings/
+.ruff_cache/

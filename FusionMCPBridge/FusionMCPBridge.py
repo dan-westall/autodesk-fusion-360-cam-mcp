@@ -87,7 +87,7 @@ def register_task_handlers():
     task_queue.register_task_handler('revolve_profile', lambda angle: geometry_impl2.revolve_profile(design, ui, angle))
     task_queue.register_task_handler('arc', lambda point1, point2, point3, plane='XY', connect=False: geometry_impl2.arc(design, ui, point1, point2, point3, plane, connect))
     task_queue.register_task_handler('draw_one_line', lambda x1, y1, z1, x2, y2, z2, plane='XY': geometry_impl2.draw_one_line(design, ui, x1, y1, z1, x2, y2, z2, plane))
-    task_queue.register_task_handler('holes', lambda points, width, depth, faceindex: geometry_impl2.holes(design, ui, points, width, depth, faceindex))
+    task_queue.register_task_handler('holes', lambda points, width, depth, faceindex, through=False: geometry_impl2.holes(design, ui, points, width, depth, faceindex, through))
     task_queue.register_task_handler('circle', lambda radius, x, y, z, plane='XY': geometry_impl.draw_circle(design, ui, radius, x, y, z, plane))
     task_queue.register_task_handler('extrude_thin', lambda thickness, distance: geometry_impl2.extrude_thin(design, ui, thickness, distance))
     task_queue.register_task_handler('select_body', lambda bodyname: geometry_impl2.select_body(design, ui, bodyname))
@@ -345,7 +345,8 @@ def handle_holes(path, method, data):
     distance = data.get('depth', None)
     if distance is not None:
         distance = float(distance)
-    task_queue.queue_task('holes', points, width, distance, faceindex)
+    through = bool(data.get('through', False))
+    task_queue.queue_task('holes', points, width, distance, faceindex, through)
     return {"status": 200, "data": {"message": "Loch wird erstellt"}}
 
 def handle_threaded(path, method, data):

@@ -447,8 +447,18 @@ def export_as_STL(design, ui, Name):
             ui.messageBox('Failed export_as_STL:\n{}'.format(traceback.format_exc()))
 
 
-def holes(design, ui, points, width=1.0, distance=1.0, faceindex=0):
-    """Create holes on a face"""
+def holes(design, ui, points, width=1.0, distance=1.0, faceindex=0, through=False):
+    """Create holes on a face
+    
+    Args:
+        design: Fusion 360 design object
+        ui: Fusion 360 UI object
+        points: List of [x, y] coordinates for hole positions
+        width: Hole diameter
+        distance: Hole depth (ignored if through=True)
+        faceindex: Index of the face to place holes on
+        through: If True, create through-all holes instead of blind holes
+    """
     try:
         rootComp = design.rootComponent
         holes = rootComp.features.holeFeatures
@@ -466,12 +476,17 @@ def holes(design, ui, points, width=1.0, distance=1.0, faceindex=0):
         for i in range(len(points)):
             holePoint = sk.sketchPoints.add(adsk.core.Point3D.create(points[i][0], points[i][1], 0))
             tipangle = adsk.core.ValueInput.createByString('180 deg')
-            holedistance = adsk.core.ValueInput.createByReal(distance)
             holeDiam = adsk.core.ValueInput.createByReal(width)
             holeInput = holes.createSimpleInput(holeDiam)
             holeInput.tipAngle = tipangle
             holeInput.setPositionBySketchPoint(holePoint)
-            holeInput.setDistanceExtent(holedistance)
+            
+            if through:
+                holeInput.setAllExtent(adsk.fusion.ExtentDirections.PositiveExtentDirection)
+            else:
+                holedistance = adsk.core.ValueInput.createByReal(distance)
+                holeInput.setDistanceExtent(holedistance)
+            
             holes.add(holeInput)
     except:
         if ui:

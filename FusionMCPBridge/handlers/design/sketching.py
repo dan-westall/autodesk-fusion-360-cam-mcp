@@ -4,6 +4,12 @@
 import json
 from typing import Dict, Any
 
+# Import centralized task queue
+from ...core.task_queue import task_queue
+from ...core.error_handling import error_handler_decorator, ErrorCategory, ErrorSeverity
+
+
+@error_handler_decorator("design.sketching", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_draw_lines(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle line drawing requests
@@ -16,19 +22,18 @@ def handle_draw_lines(path: str, method: str, data: Dict[str, Any]) -> Dict[str,
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     points = data.get('points', [])
     plane = data.get('plane', 'XY')  # 'XY', 'XZ', 'YZ'
     
-    FusionMCPBridge.task_queue.put(('draw_lines', points, plane))
+    task_queue.queue_task('draw_lines', points, plane, module_context="design.sketching")
     return {
         "status": 200,
         "data": {"message": "Lines werden erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.sketching", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_draw_one_line(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle single line drawing requests
@@ -41,9 +46,6 @@ def handle_draw_one_line(path: str, method: str, data: Dict[str, Any]) -> Dict[s
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     x1 = float(data.get('x1', 0))
     y1 = float(data.get('y1', 0))
     z1 = float(data.get('z1', 0))
@@ -52,13 +54,15 @@ def handle_draw_one_line(path: str, method: str, data: Dict[str, Any]) -> Dict[s
     z2 = float(data.get('z2', 0))
     plane = data.get('plane', 'XY')  # 'XY', 'XZ', 'YZ'
     
-    FusionMCPBridge.task_queue.put(('draw_one_line', x1, y1, z1, x2, y2, z2, plane))
+    task_queue.queue_task('draw_one_line', x1, y1, z1, x2, y2, z2, plane, module_context="design.sketching")
     return {
         "status": 200,
         "data": {"message": "Line wird erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.sketching", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_create_circle(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle circle creation requests
@@ -71,22 +75,21 @@ def handle_create_circle(path: str, method: str, data: Dict[str, Any]) -> Dict[s
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     radius = float(data.get('radius', 1.0))
     x = float(data.get('x', 0))
     y = float(data.get('y', 0))
     z = float(data.get('z', 0))
     plane = data.get('plane', 'XY')  # 'XY', 'XZ', 'YZ'
     
-    FusionMCPBridge.task_queue.put(('circle', radius, x, y, z, plane))
+    task_queue.queue_task('circle', radius, x, y, z, plane, module_context="design.sketching")
     return {
         "status": 200,
         "data": {"message": "Circle wird erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.sketching", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_arc(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle arc creation requests
@@ -99,22 +102,21 @@ def handle_arc(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     point1 = data.get('point1', [0, 0])
     point2 = data.get('point2', [1, 1])
     point3 = data.get('point3', [2, 0])
     connect = bool(data.get('connect', False))
     plane = data.get('plane', 'XY')  # 'XY', 'XZ', 'YZ'
     
-    FusionMCPBridge.task_queue.put(('arc', point1, point2, point3, plane, connect))
+    task_queue.queue_task('arc', point1, point2, point3, plane, connect, module_context="design.sketching")
     return {
         "status": 200,
         "data": {"message": "Arc wird erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.sketching", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_spline(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle spline creation requests
@@ -127,19 +129,18 @@ def handle_spline(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     points = data.get('points', [])
     plane = data.get('plane', 'XY')  # 'XY', 'XZ', 'YZ'
     
-    FusionMCPBridge.task_queue.put(('spline', points, plane))
+    task_queue.queue_task('spline', points, plane, module_context="design.sketching")
     return {
         "status": 200,
         "data": {"message": "Spline wird erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.sketching", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_draw_2d_rectangle(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle 2D rectangle creation requests
@@ -152,9 +153,6 @@ def handle_draw_2d_rectangle(path: str, method: str, data: Dict[str, Any]) -> Di
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     x_1 = float(data.get('x_1', 0))
     y_1 = float(data.get('y_1', 0))
     z_1 = float(data.get('z_1', 0))
@@ -163,13 +161,15 @@ def handle_draw_2d_rectangle(path: str, method: str, data: Dict[str, Any]) -> Di
     z_2 = float(data.get('z_2', 0))
     plane = data.get('plane', 'XY')  # 'XY', 'XZ', 'YZ'
     
-    FusionMCPBridge.task_queue.put(('draw_2d_rectangle', x_1, y_1, z_1, x_2, y_2, z_2, plane))
+    task_queue.queue_task('draw_2d_rectangle', x_1, y_1, z_1, x_2, y_2, z_2, plane, module_context="design.sketching")
     return {
         "status": 200,
         "data": {"message": "2D Rechteck wird erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.sketching", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_ellipsis(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle ellipse creation requests
@@ -182,9 +182,6 @@ def handle_ellipsis(path: str, method: str, data: Dict[str, Any]) -> Dict[str, A
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     x_center = float(data.get('x_center', 0))
     y_center = float(data.get('y_center', 0))
     z_center = float(data.get('z_center', 0))
@@ -196,14 +193,17 @@ def handle_ellipsis(path: str, method: str, data: Dict[str, Any]) -> Dict[str, A
     z_through = float(data.get('z_through', 0))
     plane = data.get('plane', 'XY')  # 'XY', 'XZ', 'YZ'
     
-    FusionMCPBridge.task_queue.put(('ellipsis', x_center, y_center, z_center,
-                                   x_major, y_major, z_major, x_through, y_through, z_through, plane))
+    task_queue.queue_task('ellipsis', x_center, y_center, z_center,
+                          x_major, y_major, z_major, x_through, y_through, z_through, plane,
+                          module_context="design.sketching")
     return {
         "status": 200,
         "data": {"message": "Ellipsis wird erstellt"},
         "headers": {"Content-Type": "application/json"}
     }
 
+
+@error_handler_decorator("design.sketching", ErrorCategory.REQUEST_HANDLING, ErrorSeverity.MEDIUM)
 def handle_draw_text(path: str, method: str, data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Handle text creation requests
@@ -216,9 +216,6 @@ def handle_draw_text(path: str, method: str, data: Dict[str, Any]) -> Dict[str, 
     Returns:
         Response dictionary
     """
-    # Import here to avoid circular imports
-    from ... import FusionMCPBridge
-    
     text = str(data.get('text', "Hello"))
     x_1 = float(data.get('x_1', 0))
     y_1 = float(data.get('y_1', 0))
@@ -230,7 +227,8 @@ def handle_draw_text(path: str, method: str, data: Dict[str, Any]) -> Dict[str, 
     plane = data.get('plane', 'XY')  # 'XY', 'XZ', 'YZ'
     thickness = float(data.get('thickness', 0.5))
     
-    FusionMCPBridge.task_queue.put(('draw_text', text, thickness, x_1, y_1, z_1, x_2, y_2, z_2, extrusion_value, plane))
+    task_queue.queue_task('draw_text', text, thickness, x_1, y_1, z_1, x_2, y_2, z_2, extrusion_value, plane,
+                          module_context="design.sketching")
     return {
         "status": 200,
         "data": {"message": "Text wird erstellt"},
