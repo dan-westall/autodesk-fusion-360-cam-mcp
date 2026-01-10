@@ -25,7 +25,7 @@ def register_tools(mcp_instance: FastMCP):
     mcp.tool()(get_toolpath_linking)
     mcp.tool()(modify_toolpath_linking)
 
-def get_toolpath_linking(toolpath_id: str):
+def get_toolpath_linking(toolpath_id: str) -> dict:
     """
     Sie können detaillierte Linking-Parameter für eine spezifische CAM-Werkzeugbahn abrufen.
     

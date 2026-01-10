@@ -31,7 +31,7 @@ def export_step(name : str):
         data = {
             "name": name
         }
-        return send_request(endpoint, data, {})
+        return send_request(endpoint, data)
     except Exception as e:
         logging.error("Export STEP failed: %s", e)
         raise
@@ -43,7 +43,7 @@ def export_stl(name : str):
         data = {
             "name": name
         }
-        return send_request(endpoint, data, {})
+        return send_request(endpoint, data)
     except Exception as e:
         logging.error("Export STL failed: %s", e)
         raise

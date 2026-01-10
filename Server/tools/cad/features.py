@@ -13,8 +13,8 @@ This module contains tools for creating features:
 import logging
 import requests
 from mcp.server.fastmcp import FastMCP
-from core.request_handler import send_request
-from core.config import get_endpoints, get_headers
+from core.config import get_endpoints, get_timeout
+from core import interceptor
 
 def register_tools(mcp_instance: FastMCP):
     """Register feature tools with the MCP server."""
@@ -32,14 +32,30 @@ def fillet_edges(radius: str):
     """Erstellt eine Abrundung an den angegebenen Kanten."""
     try:
         endpoint = get_endpoints("cad")["fillet_edges"]
-        payload = {
+        data = {
             "radius": radius
         }
-        headers = get_headers()
-        return send_request(endpoint, payload, headers)
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
     except Exception as e:
         logging.error("Fillet edges failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to create fillet: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def draw_holes(points: list, depth: float, width: float, faceindex: int = 0):
     """
@@ -65,17 +81,33 @@ def draw_holes(points: list, depth: float, width: float, faceindex: int = 0):
     """
     try:
         endpoint = get_endpoints("cad")["holes"]
-        payload = {
+        data = {
             "points": points,
             "width": width,
             "depth": depth,
             "faceindex": faceindex
         }
-        headers = get_headers()
-        send_request(endpoint, payload, headers)
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
     except Exception as e:
         logging.error("Draw holes failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to draw holes: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def shell_body(thickness: float, faceindex: int):
     """
@@ -92,15 +124,32 @@ def shell_body(thickness: float, faceindex: int):
     :return:
     """
     try:
-        headers = get_headers()
         endpoint = get_endpoints("cad")["shell_body"]
         data = {
             "thickness": thickness,
             "faceindex": faceindex
         }
-        return send_request(endpoint, data, headers)
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Shell body failed: %s", e)
+        return {
+            "error": True,
+            "message": f"Failed to shell body: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def circular_pattern(plane: str, quantity: float, axis: str):
     """
@@ -119,18 +168,33 @@ def circular_pattern(plane: str, quantity: float, axis: str):
     Typische Anwendungen: Schraubenlöcher in Kreisform, Zahnrad-Zähne, Lüftungsgitter, dekorative Muster.
     """
     try:
-        headers = get_headers()
         endpoint = get_endpoints("cad")["circular_pattern"]
         data = {
             "plane": plane,
             "quantity": quantity,
             "axis": axis
         }
-        return send_request(endpoint, data, headers)
-
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Circular pattern failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to create circular pattern: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def rectangular_pattern(plane: str, quantity_one: float, quantity_two: float, distance_one: float, distance_two: float, axis_one: str, axis_two: str):
     """
@@ -141,8 +205,6 @@ def rectangular_pattern(plane: str, quantity_one: float, quantity_two: float, di
     Aus Gründen musst du distance immer mit einer 10 multiplizieren damit es in Fusion 360 stimmt.
     """
     try:
-       
-        headers = get_headers()
         endpoint = get_endpoints("cad")["rectangular_pattern"]
         data = {
             "plane": plane,
@@ -153,11 +215,27 @@ def rectangular_pattern(plane: str, quantity_one: float, quantity_two: float, di
             "axis_one": axis_one,
             "axis_two": axis_two
         }
-        return send_request(endpoint, data, headers)
-
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Rectangular pattern failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to create rectangular pattern: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def create_thread(inside: bool, allsizes: int):
     """Erstellt ein Gewinde in Fusion 360
@@ -173,23 +251,37 @@ def create_thread(inside: bool, allsizes: int):
     """
     try:
         endpoint = get_endpoints("cad")["threaded"]
-        payload = {
+        data = {
             "inside": inside,
             "allsizes": allsizes,
-     
         }
-        headers = get_headers()
-        return send_request(endpoint, payload, headers)
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
     except Exception as e:
         logging.error("Create thread failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to create thread: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def ellipsie(x_center: float, y_center: float, z_center: float,
               x_major: float, y_major: float, z_major: float, x_through: float, y_through: float, z_through: float, plane: str):
     """Zeichne eine Ellipse in Fusion 360."""
     try:
         endpoint = get_endpoints("cad")["ellipsie"]
-        headers = get_headers()
         data = {
             "x_center": x_center,
             "y_center": y_center,
@@ -202,11 +294,27 @@ def ellipsie(x_center: float, y_center: float, z_center: float,
             "z_through": z_through,
             "plane": plane
         }
-        return send_request(endpoint, data, headers)
-
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Draw ellipse failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to draw ellipse: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def draw_witzenmannlogo(scale: float = 1.0, z: float = 1.0):
     """
@@ -221,12 +329,28 @@ def draw_witzenmannlogo(scale: float = 1.0, z: float = 1.0):
     """
     try:
         endpoint = get_endpoints("utility")["witzenmann"]
-        payload = {
+        data = {
             "scale": scale,
             "z": z
         }
-        headers = get_headers()
-        return send_request(endpoint, payload, headers)
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
     except Exception as e:
         logging.error("Witzenmannlogo failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to draw Witzenmann logo: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }

@@ -8,9 +8,13 @@ Requirements: 1.1, 1.4, 4.1, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3
 """
 
 import json
+import sys
+import logging
 from typing import Any
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 # Global interceptor state - defaults to False (disabled)
 _interceptor_enabled: bool = False
@@ -35,6 +39,7 @@ def set_interceptor_enabled(enabled: bool) -> None:
     """
     global _interceptor_enabled
     _interceptor_enabled = enabled
+    logger.info(f"Interceptor {'ENABLED' if enabled else 'DISABLED'}")
 
 
 def toggle_interceptor() -> bool:
@@ -46,54 +51,31 @@ def toggle_interceptor() -> bool:
     """
     global _interceptor_enabled
     _interceptor_enabled = not _interceptor_enabled
+    logger.info(f"Interceptor {'ENABLED' if _interceptor_enabled else 'DISABLED'}")
     return _interceptor_enabled
 
 
 def log_response(endpoint: str, response_data: Any, method: str = "POST") -> None:
     """
-    Log an HTTP response to the console with formatted output.
-    
-    Formats output with separator lines, endpoint URL, HTTP method,
-    and indented JSON. Handles non-JSON data gracefully with error message.
+    Log an HTTP response to the log file with formatted output.
     
     Args:
         endpoint: The URL that was called
         response_data: The response data (dict, list, or raw)
         method: HTTP method used (POST/GET), defaults to "POST"
-    
-    Requirements: 2.1, 2.2, 2.3, 2.4
     """
-    # Top separator
-    print("═" * 65)
-    print(f"[INTERCEPTOR] {method} {endpoint}")
-    # Middle separator
-    print("─" * 65)
-    
     try:
-        # Attempt to format as indented JSON
         if isinstance(response_data, (dict, list)):
             formatted_json = json.dumps(response_data, indent=4)
-            print(formatted_json)
         elif isinstance(response_data, str):
-            # Try to parse string as JSON
             parsed = json.loads(response_data)
             formatted_json = json.dumps(parsed, indent=4)
-            print(formatted_json)
         else:
-            # For other types, try to convert to JSON
             formatted_json = json.dumps(response_data, indent=4)
-            print(formatted_json)
     except (json.JSONDecodeError, TypeError) as e:
-        # Handle non-JSON data gracefully
-        print(f"[ERROR] Failed to parse JSON response: {e}")
-        # Show raw response snippet (truncate if too long)
-        raw_str = str(response_data)
-        if len(raw_str) > 500:
-            raw_str = raw_str[:500] + "..."
-        print(f"Raw response: {raw_str}")
+        formatted_json = f"[ERROR] Failed to parse: {e}\nRaw: {str(response_data)[:500]}"
     
-    # Bottom separator
-    print("═" * 65)
+    logger.info(f"[INTERCEPTOR] {method} {endpoint}\n{formatted_json}")
 
 
 def intercept_response(endpoint: str, response: requests.Response, method: str = "POST") -> Any:

@@ -10,8 +10,8 @@ This module contains tools for creating basic 3D shapes:
 import logging
 import requests
 from mcp.server.fastmcp import FastMCP
-from core.request_handler import send_request
-from core.config import get_endpoints, get_headers
+from core.config import get_endpoints, get_timeout
+from core import interceptor
 
 def register_tools(mcp_instance: FastMCP):
     """Register geometry tools with the MCP server."""
@@ -35,11 +35,27 @@ def draw_cylinder(radius: float , height: float , x: float, y: float, z: float ,
             "z": z,
             "plane": plane
         }
-        headers = get_headers()
-        return send_request(endpoint, data, headers)
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Draw cylinder failed: %s", e)
-        return None
+        return {
+            "error": True,
+            "message": f"Failed to draw cylinder: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def draw_box(height_value:str, width_value:str, depth_value:str, x_value:float, y_value:float,z_value:float, plane:str="XY"):
     """
@@ -69,8 +85,6 @@ def draw_box(height_value:str, width_value:str, depth_value:str, x_value:float, 
     """
     try:
         endpoint = get_endpoints("cad")["draw_box"]
-        headers = get_headers()
-
         data = {
             "height":height_value,
             "width": width_value,
@@ -79,13 +93,28 @@ def draw_box(height_value:str, width_value:str, depth_value:str, x_value:float, 
             "y" : y_value,
             "z" : z_value,
             "Plane": plane
-
         }
-
-        return send_request(endpoint, data, headers)
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Draw box failed: %s", e)
-        return None
+        return {
+            "error": True,
+            "message": f"Failed to draw box: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def draw_sphere(x: float, y: float, z: float, radius: float):
     """
@@ -102,7 +131,6 @@ def draw_sphere(x: float, y: float, z: float, radius: float):
     }
     """
     try:
-        headers = get_headers()
         endpoint = get_endpoints("cad")["draw_sphere"]
         data = {
             "x": x,
@@ -110,8 +138,24 @@ def draw_sphere(x: float, y: float, z: float, radius: float):
             "z": z,
             "radius": radius
         }
-        return send_request(endpoint, data, headers)
-
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Draw sphere failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to draw sphere: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }

@@ -30,7 +30,7 @@ def count():
     """Zählt die Parameter im aktuellen Modell."""
     try:
         endpoint = get_endpoints("utility")["count_parameters"]
-        return send_request(endpoint, {}, {})
+        return send_request(endpoint, {})
     except Exception as e:
         logging.error("Count failed: %s", e)
         raise
@@ -39,7 +39,7 @@ def list_parameters():
     """Listet alle Parameter im aktuellen Modell auf."""
     try:
         endpoint = get_endpoints("utility")["list_parameters"]
-        return send_request(endpoint, {}, {})
+        return send_request(endpoint, {})
     except Exception as e:
         logging.error("List parameters failed: %s", e)
         raise
@@ -52,8 +52,7 @@ def change_parameter(name: str, value: str):
             "name": name,
             "value": value
         }
-        headers = get_headers()
-        return send_request(endpoint, payload, headers)
+        return send_request(endpoint, payload)
     except Exception as e:
         logging.error("Change parameter failed: %s", e)
         raise

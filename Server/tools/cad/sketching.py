@@ -12,8 +12,8 @@ This module contains tools for 2D drawing operations:
 import logging
 import requests
 from mcp.server.fastmcp import FastMCP
-from core.request_handler import send_request
-from core.config import get_endpoints, get_headers
+from core.config import get_endpoints, get_timeout
+from core import interceptor
 
 def register_tools(mcp_instance: FastMCP):
     """Register sketching tools with the MCP server."""
@@ -47,7 +47,6 @@ def draw2Dcircle(radius: float, x: float, y: float, z: float, plane: str = "XY")
     }
     """
     try:
-        headers = get_headers()
         endpoint = get_endpoints("cad")["draw2Dcircle"]
         data = {
             "radius": radius,
@@ -56,11 +55,28 @@ def draw2Dcircle(radius: float, x: float, y: float, z: float, plane: str = "XY")
             "z": z,
             "plane": plane
         }
-        return send_request(endpoint, data, headers)
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
 
-    except requests.RequestException as e:
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Draw 2D circle failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to draw 2D circle: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def draw_lines(points : list, plane : str):
     """
@@ -73,15 +89,33 @@ def draw_lines(points : list, plane : str):
     Beispiel: "XY", "YZ", "XZ"
     """
     try:
-        headers = get_headers()
         endpoint = get_endpoints("cad")["draw_lines"]
         data = {
             "points": points,
             "plane": plane
         }
-        return send_request(endpoint, data, headers)
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+        
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Draw lines failed: %s", e)
+        return {
+            "error": True,
+            "message": f"Failed to draw lines: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def draw_one_line(x1: float, y1: float, z1: float, x2: float, y2: float, z2: float, plane: str="XY"):
     """
@@ -93,7 +127,6 @@ def draw_one_line(x1: float, y1: float, z1: float, x2: float, y2: float, z2: flo
     """
     try:
         endpoint = get_endpoints("cad")["draw_one_line"]
-        headers = get_headers()
         data = {
             "x1": x1,
             "y1": y1,
@@ -103,11 +136,28 @@ def draw_one_line(x1: float, y1: float, z1: float, x2: float, y2: float, z2: flo
             "z2": z2,
             "plane": plane
         }
-        return send_request(endpoint, data, headers)
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
 
-    except requests.RequestException as e:
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Draw one line failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to draw line: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def draw_arc(point1 : list, point2 : list, point3 : list, plane : str):
     """
@@ -120,18 +170,34 @@ def draw_arc(point1 : list, point2 : list, point3 : list, plane : str):
     """
     try:
         endpoint = get_endpoints("cad")["arc"]
-        headers = get_headers()
         data = {
             "point1": point1,
             "point2": point2,
             "point3": point3,
             "plane": plane
         }
-        return send_request(endpoint, data, headers)
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
 
-    except requests.RequestException as e:
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Draw arc failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to draw arc: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def spline(points: list, plane: str):
     """
@@ -145,12 +211,29 @@ def spline(points: list, plane: str):
     """
     try:
         endpoint = get_endpoints("cad")["spline"]
-        payload = {
+        data = {
             "points": points,
             "plane": plane
         }
-        headers = get_headers()
-        return send_request(endpoint, payload, headers)
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+        
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
     except Exception as e:
         logging.error("Spline failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to create spline: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }

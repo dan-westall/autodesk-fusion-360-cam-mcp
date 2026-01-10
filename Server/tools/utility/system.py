@@ -30,7 +30,7 @@ def test_connection():
     """Testes die Verbindung zum Fusion 360 Server."""
     try:
         endpoint = get_endpoints("utility")["test_connection"]
-        return send_request(endpoint, {}, {})
+        return send_request(endpoint, {})
     except Exception as e:
         logging.error("Test connection failed: %s", e)
         raise
@@ -39,8 +39,7 @@ def delete_all():
     """Löscht alle Objekte in der aktuellen Fusion 360-Sitzung."""
     try:
         endpoint = get_endpoints("utility")["delete_everything"]
-        headers = get_headers()
-        send_request(endpoint, {}, headers)
+        return send_request(endpoint, {})
     except Exception as e:
         logging.error("Delete failed: %s", e)
         raise
@@ -49,7 +48,7 @@ def undo():
     """Macht die letzte Aktion rückgängig."""
     try:
         endpoint = get_endpoints("utility")["undo"]
-        return send_request(endpoint, {}, {})
+        return send_request(endpoint, {})
     except Exception as e:
         logging.error("Undo failed: %s", e)
         raise
@@ -65,8 +64,7 @@ def move_latest_body(x : float,y:float,z:float):
         "y": y,
         "z": z
     }
-    headers = get_headers()
-    return send_request(endpoint, payload, headers)
+    return send_request(endpoint, payload)
 
 def list_available_prompts():
     """

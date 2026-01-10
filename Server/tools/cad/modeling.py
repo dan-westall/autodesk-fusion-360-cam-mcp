@@ -11,32 +11,27 @@ This module contains tools for 3D modeling operations:
 - boolean_operation: Boolean operations between bodies
 """
 
-import json
 import logging
 import requests
 from mcp.server.fastmcp import FastMCP
-from core.request_handler import send_request
-from core.config import get_endpoints, get_headers
+from core.config import get_endpoints, get_timeout
+from core import interceptor
 
 # Get the MCP instance from the main server
 # This will be injected by the module loader
-mcp = None
 
 def register_tools(mcp_instance: FastMCP):
     """Register modeling tools with the MCP server."""
-    global mcp
-    mcp = mcp_instance
-    
     # Register all tools in this module
-    mcp.tool()(extrude)
-    mcp.tool()(extrude_thin)
-    mcp.tool()(cut_extrude)
-    mcp.tool()(revolve)
-    mcp.tool()(loft)
-    mcp.tool()(sweep)
-    mcp.tool()(boolean_operation)
-    mcp.tool()(draw_2d_rectangle)
-    mcp.tool()(draw_text)
+    mcp_instance.tool()(extrude)
+    mcp_instance.tool()(extrude_thin)
+    mcp_instance.tool()(cut_extrude)
+    mcp_instance.tool()(revolve)
+    mcp_instance.tool()(loft)
+    mcp_instance.tool()(sweep)
+    mcp_instance.tool()(boolean_operation)
+    mcp_instance.tool()(draw_2d_rectangle)
+    mcp_instance.tool()(draw_text)
 
 def extrude(value: float,angle:float):
     """Extrudiert die letzte Skizze um einen angegebenen Wert.
@@ -44,18 +39,32 @@ def extrude(value: float,angle:float):
     
     """
     try:
-        url = get_endpoints("cad")["extrude"]
+        endpoint = get_endpoints("cad")["extrude"]
         data = {
             "value": value,
             "taperangle": angle
         }
-        data = json.dumps(data)
-        headers = get_headers()
-        response = requests.post(url, data, headers=headers)
-        return response.json()
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Extrude failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to extrude: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def extrude_thin(thickness :float, distance : float):
     """
@@ -64,16 +73,32 @@ def extrude_thin(thickness :float, distance : float):
     :param thickness: Die Dicke der Wand in mm
     """
     try:
-        headers = get_headers()
         endpoint = get_endpoints("cad")["extrude_thin"]
         data = {
             "thickness": thickness,
             "distance": distance
         }
-        return send_request(endpoint, data, headers)
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Extrude thin failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to extrude thin: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def cut_extrude(depth :float):
     """
@@ -82,16 +107,31 @@ def cut_extrude(depth :float):
     depth muss negativ sein ganz wichtig!
     """
     try:
-        headers = get_headers()
         endpoint = get_endpoints("cad")["cut_extrude"]
         data = {
             "depth": depth
         }
-        return send_request(endpoint, data, headers)
-
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Cut extrude failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to cut extrude: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
     
 def revolve(angle : float):
     """
@@ -100,17 +140,31 @@ def revolve(angle : float):
     Wir übergeben den Winkel als Float
     """
     try:
-        headers = get_headers()    
         endpoint = get_endpoints("cad")["revolve"]
         data = {
             "angle": angle
-
         }
-        return send_request(endpoint, data, headers)
-
-    except requests.RequestException as e:
-        logging.error("Revolve failed: %s", e)  
-        raise
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
+        logging.error("Revolve failed: %s", e)
+        return {
+            "error": True,
+            "message": f"Failed to revolve: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def loft(sketchcount: int):
     """
@@ -121,15 +175,30 @@ def loft(sketchcount: int):
     """
     try:
         endpoint = get_endpoints("cad")["loft"]
-        headers = get_headers()
         data = {
             "sketchcount": sketchcount
         }
-        return send_request(endpoint, data, headers)
-
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Loft failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to loft: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def sweep():
     """
@@ -138,10 +207,27 @@ def sweep():
     """
     try:
         endpoint = get_endpoints("cad")["sweep"]
-        return send_request(endpoint, {}, {})
+        response = requests.post(endpoint, json={}, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
     except Exception as e:
         logging.error("Sweep failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to sweep: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def boolean_operation(operation: str):
     """
@@ -151,22 +237,37 @@ def boolean_operation(operation: str):
     Wichtig ist, dass du vorher zwei Körper erstellt hast,
     """
     try:
-        headers = get_headers()
         endpoint = get_endpoints("cad")["boolean_operation"]
         data = {
             "operation": operation
         }
-        return send_request(endpoint, data, headers)
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Boolean operation failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to perform boolean operation: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def draw_2d_rectangle(x_1: float, y_1: float, z_1: float, x_2: float, y_2: float, z_2: float, plane: str):
     """
     Zeichne ein 2D-Rechteck in Fusion 360 für loft /Sweep etc.
     """
     try:
-        headers = get_headers()
         endpoint = get_endpoints("cad")["draw_2d_rectangle"]
         data = {
             "x_1": x_1,
@@ -177,11 +278,27 @@ def draw_2d_rectangle(x_1: float, y_1: float, z_1: float, x_2: float, y_2: float
             "z_2": z_2,
             "plane": plane
         }
-        return send_request(endpoint, data, headers)
-
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Draw 2D rectangle failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to draw 2D rectangle: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }
 
 def draw_text(text: str, plane: str, x_1: float, y_1: float, z_1: float, x_2: float, y_2: float, z_2: float, thickness: float,value: float):
     """
@@ -189,7 +306,6 @@ def draw_text(text: str, plane: str, x_1: float, y_1: float, z_1: float, x_2: fl
     Mit value kannst du angeben wie weit du den text extrudieren willst
     """
     try:
-        headers = get_headers()
         endpoint = get_endpoints("cad")["draw_text"]
         data = {
             "text": text,
@@ -203,7 +319,24 @@ def draw_text(text: str, plane: str, x_1: float, y_1: float, z_1: float, x_2: fl
             "thickness": thickness,
             "extrusion_value": value
         }
-        return send_request(endpoint, data, headers)
-    except requests.RequestException as e:
+        response = requests.post(endpoint, json=data, timeout=get_timeout())
+        return interceptor.intercept_response(endpoint, response, "POST")
+    except requests.ConnectionError:
+        return {
+            "error": True,
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+            "code": "CONNECTION_ERROR"
+        }
+    except requests.Timeout:
+        return {
+            "error": True,
+            "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+            "code": "TIMEOUT_ERROR"
+        }
+    except Exception as e:
         logging.error("Draw text failed: %s", e)
-        raise
+        return {
+            "error": True,
+            "message": f"Failed to draw text: {str(e)}",
+            "code": "UNKNOWN_ERROR"
+        }

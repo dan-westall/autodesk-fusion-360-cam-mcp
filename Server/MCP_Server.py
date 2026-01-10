@@ -37,10 +37,15 @@ from prompts.registry import get_prompt_registry
 # Import templates to ensure prompts are registered
 from prompts import templates
 
-# Configure logging
+# Configure logging - write to file for stdio debugging
+LOG_FILE = os.path.join(os.path.dirname(__file__), 'mcp_server.log')
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler(sys.stderr)  # stderr doesn't interfere with stdio
+    ]
 )
 logger = logging.getLogger(__name__)
 

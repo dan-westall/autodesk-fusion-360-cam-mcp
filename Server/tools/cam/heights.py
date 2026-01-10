@@ -23,7 +23,7 @@ def register_tools(mcp_instance: FastMCP):
     # Register all tools in this module
     mcp.tool()(get_toolpath_heights)
 
-def get_toolpath_heights(toolpath_id: str):
+def get_toolpath_heights(toolpath_id: str) -> dict:
     """
     Sie können detaillierte Höheninformationen für eine spezifische CAM-Werkzeugbahn abrufen.
     
