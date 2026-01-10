@@ -1,0 +1,580 @@
+{
+  "metadata": {
+    "created_at": "2026-01-10T18:53:04.971709",
+    "purpose": "CAM functionality baseline before CAD removal",
+    "requirements": [
+      "9.1",
+      "9.2",
+      "9.3",
+      "9.4",
+      "9.5"
+    ]
+  },
+  "summary": {
+    "total_functions": 27,
+    "categories": [
+      "setup_management",
+      "toolpath_operations",
+      "tool_management",
+      "parameter_management",
+      "height_management",
+      "pass_management",
+      "linking_management"
+    ],
+    "functions_by_category": {
+      "setup_management": 12,
+      "toolpath_operations": 4,
+      "tool_management": 5,
+      "parameter_management": 1,
+      "height_management": 1,
+      "pass_management": 2,
+      "linking_management": 2
+    }
+  },
+  "function_signatures": {
+    "setup_management": {
+      "create_cam_setup": {
+        "name": "create_cam_setup",
+        "module": "tools.cam.setups",
+        "parameters": [
+          {
+            "name": "name",
+            "annotation": "<class 'str'>",
+            "default": "None",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "stock_mode",
+            "annotation": "<class 'str'>",
+            "default": "auto",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "wcs_config",
+            "annotation": "<class 'dict'>",
+            "default": "None",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "model_id",
+            "annotation": "<class 'str'>",
+            "default": "None",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(name: str = None, stock_mode: str = 'auto', wcs_config: dict = None, model_id: str = None) -> dict",
+        "docstring": "\nCreate a new CAM setup with specified configuration.\n\nThis tool creates a new CAM setup in Fusion 360 with the specified name, stock configuration,\nand work coordinate system (WCS) settings. The setup serves as a container for machining\noperations and defines the coordinate system and stock material for manufacturing.\n\nArgs:\n    name: Optional setup name. If not provided, a descriptive name will be generated\n          based on the selected geometry or a default pattern\n    stock_mode: Stock configuration mode. Options:\n               - \"auto\": Automatically detect stock from selected bodies (default)\n               - \"geometry\": Use existing geometry as stock reference\n               - \"box\": Create primitive box stock with specified dimensions\n               - \"cylinder\": Create primitive cylinder stock with specified dimensions\n    wcs_config: Optional Work Coordinate System configuration. If not provided,\n               defaults to model origin with standard orientation. Structure:\n               {\n                   \"origin\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0},  # Origin point\n                   \"orientation\": \"model_based\",  # or \"face_based\", \"custom\"\n                   \"reference_geometry\": \"geometry_id\"  # For face-based orientation\n               }\n    model_id: Optional model ID reference for geometry selection. If not provided,\n             the system will use the active design model\n\nReturns:\n    dict: Setup creation result with setup details or error information\n          Success response includes:\n          - setup_id: Unique identifier for the created setup\n          - name: Final setup name (generated or specified)\n          - wcs: Work coordinate system configuration\n          - stock: Stock configuration details\n          - created_date: Setup creation timestamp\n          \n          Error response includes:\n          - error: True\n          - message: Human-readable error description\n          - code: Error code (SETUP_CREATION_FAILED, INVALID_CONFIG, etc.)\n\nExample usage:\n    # Create setup with automatic stock detection\n    create_cam_setup(name=\"Roughing Setup\", stock_mode=\"auto\")\n    \n    # Create setup with custom WCS and box stock\n    create_cam_setup(\n        name=\"Finishing Setup\",\n        stock_mode=\"box\",\n        wcs_config={\n            \"origin\": {\"x\": 10.0, \"y\": 5.0, \"z\": 0.0},\n            \"orientation\": \"model_based\"\n        }\n    )\n\nRequirements: 1.1, 1.2, 1.3, 1.4, 1.5 (Setup creation with basic configuration)\n"
+      },
+      "list_cam_setups": {
+        "name": "list_cam_setups",
+        "module": "tools.cam.setups",
+        "parameters": [
+          {
+            "name": "include_toolpaths",
+            "annotation": "<class 'bool'>",
+            "default": "True",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(include_toolpaths: bool = True) -> dict",
+        "docstring": "\nList all CAM setups with comprehensive configuration details.\n\nThis tool returns all CAM setups in the current Fusion 360 document with detailed\ninformation including WCS configuration, stock definition, toolpath count, and\nsetup metadata. Uses proper Fusion 360 WCS terminology throughout.\n\nArgs:\n    include_toolpaths: Whether to include toolpath information for each setup.\n                      Default is True. When False, only setup configuration is returned.\n\nReturns:\n    dict: List of all setups with detailed information\n          Success response includes:\n          - setups: Array of setup objects with:\n            - id: Unique setup identifier\n            - name: Setup name\n            - wcs: Work coordinate system configuration\n            - stock: Stock definition and positioning\n            - toolpaths: Array of contained toolpaths (if include_toolpaths=True)\n            - created_date: Setup creation timestamp\n            - modified_date: Last modification timestamp\n          - total_count: Total number of setups\n          - message: Status message or null\n          \n          Error response includes:\n          - error: True\n          - message: Human-readable error description\n          - code: Error code (CAM_NOT_AVAILABLE, CONNECTION_ERROR, etc.)\n\nExample response:\n    {\n        \"setups\": [\n            {\n                \"id\": \"setup_001\",\n                \"name\": \"Roughing Setup\",\n                \"wcs\": {\n                    \"origin\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0},\n                    \"orientation\": \"model_based\"\n                },\n                \"stock\": {\n                    \"mode\": \"auto\",\n                    \"dimensions\": {\"length\": 100.0, \"width\": 50.0, \"height\": 25.0}\n                },\n                \"toolpaths\": [\n                    {\n                        \"id\": \"op_001\",\n                        \"name\": \"Adaptive Clearing\",\n                        \"type\": \"adaptive\",\n                        \"tool_name\": \"6mm Flat Endmill\",\n                        \"is_valid\": true\n                    }\n                ],\n                \"created_date\": \"2025-01-03T10:30:00Z\"\n            }\n        ],\n        \"total_count\": 1,\n        \"message\": null\n    }\n\nTypical use cases:\n- Getting overview of all manufacturing setups\n- Finding setup IDs for detailed inspection\n- Understanding setup organization and toolpath distribution\n\nRequirements: 4.1, 4.2 (Setup listing with basic and detailed properties)\n"
+      },
+      "get_setup_details": {
+        "name": "get_setup_details",
+        "module": "tools.cam.setups",
+        "parameters": [
+          {
+            "name": "setup_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(setup_id: str) -> dict",
+        "docstring": "\nGet detailed information about a specific CAM setup.\n\nThis tool retrieves comprehensive configuration details for a specific setup,\nincluding WCS configuration, stock definition, contained toolpaths, and metadata.\nUse this after list_cam_setups() to inspect the full configuration of a specific setup.\n\nArgs:\n    setup_id: Unique identifier of the setup to retrieve. Must match exactly\n             what was returned by list_cam_setups()\n\nReturns:\n    dict: Detailed setup information or error\n          Success response includes:\n          - id: Setup identifier\n          - name: Setup name\n          - model_id: Model reference (root level)\n          - wcs: Complete Work Coordinate System configuration\n          - stock: Complete stock definition and positioning\n          - toolpaths: Array of all contained toolpaths with details\n          - created_date: Setup creation timestamp\n          - modified_date: Last modification timestamp\n          - operation_count: Number of machining operations\n          - is_valid: Whether setup configuration is valid\n          \n          Error response includes:\n          - error: True\n          - message: Human-readable error description\n          - code: Error code (SETUP_NOT_FOUND, CAM_NOT_AVAILABLE, etc.)\n\nExample usage:\n    get_setup_details(\"setup_001\")\n\nExample response:\n    {\n        \"id\": \"setup_001\",\n        \"name\": \"Roughing Setup\",\n        \"model_id\": \"model_123\",\n        \"wcs\": {\n            \"origin\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0},\n            \"orientation\": \"model_based\",\n            \"x_axis\": {\"x\": 1.0, \"y\": 0.0, \"z\": 0.0},\n            \"y_axis\": {\"x\": 0.0, \"y\": 1.0, \"z\": 0.0},\n            \"z_axis\": {\"x\": 0.0, \"y\": 0.0, \"z\": 1.0}\n        },\n        \"stock\": {\n            \"mode\": \"auto\",\n            \"geometry_id\": \"body_456\",\n            \"dimensions\": {\"length\": 100.0, \"width\": 50.0, \"height\": 25.0},\n            \"position\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0},\n            \"material\": \"Aluminum 6061\"\n        },\n        \"toolpaths\": [...],\n        \"created_date\": \"2025-01-03T10:30:00Z\",\n        \"modified_date\": \"2025-01-03T11:15:00Z\",\n        \"operation_count\": 3,\n        \"is_valid\": true\n    }\n\nRequirements: 4.3 (Query setup by ID with specific details or error)\n"
+      },
+      "modify_setup_configuration": {
+        "name": "modify_setup_configuration",
+        "module": "tools.cam.setups",
+        "parameters": [
+          {
+            "name": "setup_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "updates",
+            "annotation": "<class 'dict'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(setup_id: str, updates: dict) -> dict",
+        "docstring": "\nModify existing CAM setup configuration.\n\nThis tool updates the configuration of an existing setup while preserving\nexisting operations where possible. It validates changes and provides warnings\nwhen modifications might affect existing toolpaths.\n\nArgs:\n    setup_id: Unique identifier of the setup to modify\n    updates: Dictionary containing the configuration updates. Supported fields:\n            - name: New setup name\n            - wcs: Work coordinate system updates\n            - stock: Stock configuration updates\n            - model_id: Model reference updates\n            \n            Example updates structure:\n            {\n                \"name\": \"Updated Setup Name\",\n                \"wcs\": {\n                    \"origin\": {\"x\": 10.0, \"y\": 5.0, \"z\": 0.0}\n                },\n                \"stock\": {\n                    \"mode\": \"box\",\n                    \"dimensions\": {\"length\": 120.0, \"width\": 60.0, \"height\": 30.0}\n                }\n            }\n\nReturns:\n    dict: Modification result with updated setup information or error\n          Success response includes:\n          - setup_id: Setup identifier\n          - updated_fields: List of fields that were modified\n          - warnings: Array of warnings about potential impacts on operations\n          - setup: Updated setup configuration\n          - modified_date: Timestamp of modification\n          \n          Error response includes:\n          - error: True\n          - message: Human-readable error description\n          - code: Error code (SETUP_NOT_FOUND, INVALID_UPDATES, etc.)\n\nExample usage:\n    modify_setup_configuration(\"setup_001\", {\n        \"name\": \"Revised Roughing Setup\",\n        \"stock\": {\n            \"mode\": \"box\",\n            \"dimensions\": {\"length\": 110.0, \"width\": 55.0, \"height\": 28.0}\n        }\n    })\n\nRequirements: 5.1, 5.2, 5.3, 5.5 (Modify setup properties with validation and warnings)\n"
+      },
+      "delete_cam_setup": {
+        "name": "delete_cam_setup",
+        "module": "tools.cam.setups",
+        "parameters": [
+          {
+            "name": "setup_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "confirm",
+            "annotation": "<class 'bool'>",
+            "default": "False",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(setup_id: str, confirm: bool = False) -> dict",
+        "docstring": "\nDelete a CAM setup with confirmation and impact warnings.\n\nThis tool removes a CAM setup and all associated operations. It provides warnings\nabout data loss when the setup contains active toolpaths and requires explicit\nconfirmation for deletion.\n\nArgs:\n    setup_id: Unique identifier of the setup to delete\n    confirm: Explicit confirmation flag. Must be True to proceed with deletion.\n            If False, returns impact analysis without deleting.\n\nReturns:\n    dict: Deletion result or impact analysis\n          When confirm=False (impact analysis):\n          - setup_id: Setup identifier\n          - setup_name: Setup name\n          - toolpath_count: Number of toolpaths that will be deleted\n          - operation_count: Number of operations that will be deleted\n          - warnings: Array of warnings about data loss\n          - requires_confirmation: True\n          \n          When confirm=True (actual deletion):\n          - deleted: True\n          - setup_id: Deleted setup identifier\n          - setup_name: Name of deleted setup\n          - deleted_operations: Count of deleted operations\n          - deleted_toolpaths: Count of deleted toolpaths\n          - deletion_date: Timestamp of deletion\n          \n          Error response includes:\n          - error: True\n          - message: Human-readable error description\n          - code: Error code (SETUP_NOT_FOUND, DELETION_FAILED, etc.)\n\nExample usage:\n    # First, get impact analysis\n    delete_cam_setup(\"setup_001\", confirm=False)\n    \n    # Then, confirm deletion\n    delete_cam_setup(\"setup_001\", confirm=True)\n\nRequirements: 6.1, 6.2, 6.3 (Delete setup with warnings and confirmation)\n"
+      },
+      "duplicate_cam_setup": {
+        "name": "duplicate_cam_setup",
+        "module": "tools.cam.setups",
+        "parameters": [
+          {
+            "name": "setup_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "new_name",
+            "annotation": "<class 'str'>",
+            "default": "None",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(setup_id: str, new_name: str = None) -> dict",
+        "docstring": "\nCreate a duplicate of an existing CAM setup.\n\nThis tool creates a complete copy of an existing setup including WCS configuration,\nstock definition, and operation templates. The duplicate setup will have identical\nconfiguration but a unique name and identifier.\n\nArgs:\n    setup_id: Unique identifier of the setup to duplicate\n    new_name: Optional name for the duplicated setup. If not provided,\n             a unique name will be generated based on the original setup name\n             (e.g., \"Original Setup Copy\", \"Original Setup Copy 2\", etc.)\n\nReturns:\n    dict: Duplication result with new setup information or error\n          Success response includes:\n          - original_setup_id: ID of the source setup\n          - new_setup_id: ID of the created duplicate\n          - new_setup_name: Name of the duplicated setup\n          - copied_elements: List of configuration elements that were copied\n          - duplication_date: Timestamp of duplication\n          - setup: Complete configuration of the new setup\n          \n          Error response includes:\n          - error: True\n          - message: Human-readable error description\n          - code: Error code (SETUP_NOT_FOUND, DUPLICATION_FAILED, etc.)\n\nExample usage:\n    # Duplicate with automatic name generation\n    duplicate_cam_setup(\"setup_001\")\n    \n    # Duplicate with custom name\n    duplicate_cam_setup(\"setup_001\", new_name=\"Finishing Setup\")\n\nExample response:\n    {\n        \"original_setup_id\": \"setup_001\",\n        \"new_setup_id\": \"setup_002\",\n        \"new_setup_name\": \"Roughing Setup Copy\",\n        \"copied_elements\": [\"wcs\", \"stock\", \"operations\"],\n        \"duplication_date\": \"2025-01-03T12:00:00Z\",\n        \"setup\": {\n            \"id\": \"setup_002\",\n            \"name\": \"Roughing Setup Copy\",\n            \"wcs\": {...},\n            \"stock\": {...}\n        }\n    }\n\nRequirements: 7.1, 7.2, 7.3, 7.4 (Duplicate setup with identical configuration and naming)\n"
+      },
+      "get_setup_toolpaths": {
+        "name": "get_setup_toolpaths",
+        "module": "tools.cam.setups",
+        "parameters": [
+          {
+            "name": "setup_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "include_details",
+            "annotation": "<class 'bool'>",
+            "default": "True",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(setup_id: str, include_details: bool = True) -> dict",
+        "docstring": "\nGet all toolpaths within a specific CAM setup.\n\nThis tool retrieves all toolpath operations contained within a setup,\nproviding bidirectional setup-toolpath relationship queries. Each toolpath\nincludes setup context information as required for proper CAM workflow management.\n\nArgs:\n    setup_id: Unique identifier of the setup to query\n    include_details: Whether to include full toolpath details including tool\n                    information. Default is True.\n\nReturns:\n    dict: Toolpaths within the setup with setup context\n          Success response includes:\n          - setup_id: Setup identifier\n          - setup_name: Setup name\n          - toolpaths: Array of toolpath objects with:\n            - id: Toolpath identifier\n            - name: Toolpath name\n            - type: Operation type (adaptive, pocket, contour, etc.)\n            - is_valid: Validity status\n            - setup_id: Parent setup ID (always included)\n            - setup_name: Parent setup name\n            - tool: Tool information (if include_details=True)\n            - folder: Folder name if toolpath is in a folder\n          - total_count: Number of toolpaths in the setup\n          - message: Status message\n          \n          Error response includes:\n          - error: True\n          - message: Human-readable error description\n          - code: Error code (SETUP_NOT_FOUND, etc.)\n\nExample usage:\n    # Get all toolpaths with full details\n    get_setup_toolpaths(\"setup_001\")\n    \n    # Get toolpaths without tool details (faster)\n    get_setup_toolpaths(\"setup_001\", include_details=False)\n\nExample response:\n    {\n        \"setup_id\": \"setup_001\",\n        \"setup_name\": \"Roughing Setup\",\n        \"toolpaths\": [\n            {\n                \"id\": \"op_001\",\n                \"name\": \"Adaptive Clearing\",\n                \"type\": \"adaptive\",\n                \"is_valid\": true,\n                \"setup_id\": \"setup_001\",\n                \"setup_name\": \"Roughing Setup\",\n                \"tool\": {\n                    \"id\": \"tool_001\",\n                    \"name\": \"6mm Flat Endmill\",\n                    \"type\": \"flat end mill\"\n                }\n            }\n        ],\n        \"total_count\": 1,\n        \"message\": \"Found 1 toolpath(s) in setup 'Roughing Setup'\"\n    }\n\nTypical use cases:\n- Getting all operations within a specific setup\n- Understanding setup organization\n- Validating setup-toolpath relationships\n\nRequirements: 9.1, 9.2, 10.1, 10.2, 10.3, 11.1, 11.3\n"
+      },
+      "find_toolpath_setup": {
+        "name": "find_toolpath_setup",
+        "module": "tools.cam.setups",
+        "parameters": [
+          {
+            "name": "toolpath_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(toolpath_id: str) -> dict",
+        "docstring": "\nFind which setup contains a specific toolpath.\n\nThis tool provides bidirectional setup-toolpath relationship queries,\nresolving the parent setup from a toolpath ID. Use this when you have\na toolpath ID and need to know which setup it belongs to.\n\nArgs:\n    toolpath_id: Unique identifier of the toolpath to find\n\nReturns:\n    dict: Setup information for the toolpath\n          Success response includes:\n          - toolpath_id: The queried toolpath ID\n          - toolpath_name: Name of the toolpath\n          - toolpath_type: Operation type\n          - setup_id: Parent setup ID\n          - setup_name: Parent setup name\n          - folder: Folder name if toolpath is in a folder (null otherwise)\n          - message: Status message\n          \n          Error response includes:\n          - error: True\n          - message: Human-readable error description\n          - code: Error code (TOOLPATH_NOT_FOUND, etc.)\n\nExample usage:\n    find_toolpath_setup(\"op_001\")\n\nExample response:\n    {\n        \"toolpath_id\": \"op_001\",\n        \"toolpath_name\": \"Adaptive Clearing\",\n        \"toolpath_type\": \"adaptive\",\n        \"setup_id\": \"setup_001\",\n        \"setup_name\": \"Roughing Setup\",\n        \"folder\": null,\n        \"message\": \"Toolpath 'Adaptive Clearing' belongs to setup 'Roughing Setup'\"\n    }\n\nTypical use cases:\n- Finding the parent setup for a toolpath\n- Validating toolpath context before operations\n- Understanding CAM document structure\n\nRequirements: 9.1, 9.2, 9.3, 11.1, 11.2, 11.3\n"
+      },
+      "validate_setup_toolpath_relationship": {
+        "name": "validate_setup_toolpath_relationship",
+        "module": "tools.cam.setups",
+        "parameters": [
+          {
+            "name": "setup_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "toolpath_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(setup_id: str, toolpath_id: str) -> dict",
+        "docstring": "\nValidate that a toolpath belongs to a specific setup.\n\nThis tool validates setup context and permissions for toolpath operations.\nUse this before performing operations that require a toolpath to be in\na specific setup, or to verify the relationship between setups and toolpaths.\n\nArgs:\n    setup_id: Setup ID to validate against\n    toolpath_id: Toolpath ID to check\n\nReturns:\n    dict: Validation result\n          Valid relationship response:\n          - valid: True\n          - setup_id: The setup ID\n          - setup_name: Setup name\n          - toolpath_id: The toolpath ID\n          - toolpath_name: Toolpath name\n          - toolpath_type: Operation type\n          - folder: Folder name if applicable\n          - message: Confirmation message\n          \n          Invalid relationship response:\n          - valid: False\n          - message: Description of the mismatch\n          - code: TOOLPATH_SETUP_MISMATCH\n          - setup_id: The queried setup ID\n          - toolpath_id: The queried toolpath ID\n          - actual_setup_id: The setup where toolpath actually exists\n          - actual_setup_name: Name of the actual setup\n          \n          Error response includes:\n          - valid: False\n          - error: True\n          - message: Human-readable error description\n          - code: Error code\n\nExample usage:\n    validate_setup_toolpath_relationship(\"setup_001\", \"op_001\")\n\nExample response (valid):\n    {\n        \"valid\": true,\n        \"setup_id\": \"setup_001\",\n        \"setup_name\": \"Roughing Setup\",\n        \"toolpath_id\": \"op_001\",\n        \"toolpath_name\": \"Adaptive Clearing\",\n        \"toolpath_type\": \"adaptive\",\n        \"folder\": null,\n        \"message\": \"Toolpath 'Adaptive Clearing' is valid within setup 'Roughing Setup'\"\n    }\n\nExample response (mismatch):\n    {\n        \"valid\": false,\n        \"message\": \"Toolpath 'Contour Finishing' does not belong to setup 'Roughing Setup'. It belongs to setup 'Finishing Setup'\",\n        \"code\": \"TOOLPATH_SETUP_MISMATCH\",\n        \"setup_id\": \"setup_001\",\n        \"toolpath_id\": \"op_002\",\n        \"actual_setup_id\": \"setup_002\",\n        \"actual_setup_name\": \"Finishing Setup\"\n    }\n\nRequirements: 9.3, 11.4, 11.5\n"
+      },
+      "get_setup_toolpath_mapping": {
+        "name": "get_setup_toolpath_mapping",
+        "module": "tools.cam.setups",
+        "parameters": [],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "() -> dict",
+        "docstring": "\nGet comprehensive mapping of all setups to their toolpaths.\n\nThis tool provides a complete bidirectional view of the setup-toolpath\nrelationships in the CAM document. Use this to understand the overall\nstructure of the CAM document and for validation purposes.\n\nReturns:\n    dict: Complete mapping with:\n          - setups: Array of setups with their toolpath IDs\n            - id: Setup identifier\n            - name: Setup name\n            - toolpath_ids: Array of toolpath IDs in this setup\n            - toolpath_count: Number of toolpaths\n          - toolpath_to_setup: Dictionary mapping toolpath IDs to setup info\n            - [toolpath_id]: {setup_id, setup_name, toolpath_name, folder}\n          - total_setups: Number of setups\n          - total_toolpaths: Total number of toolpaths\n          - message: Status message\n          \n          Error response includes:\n          - error: True\n          - message: Human-readable error description\n          - code: Error code\n\nExample usage:\n    get_setup_toolpath_mapping()\n\nExample response:\n    {\n        \"setups\": [\n            {\n                \"id\": \"setup_001\",\n                \"name\": \"Roughing Setup\",\n                \"toolpath_ids\": [\"op_001\", \"op_002\"],\n                \"toolpath_count\": 2\n            },\n            {\n                \"id\": \"setup_002\",\n                \"name\": \"Finishing Setup\",\n                \"toolpath_ids\": [\"op_003\"],\n                \"toolpath_count\": 1\n            }\n        ],\n        \"toolpath_to_setup\": {\n            \"op_001\": {\"setup_id\": \"setup_001\", \"setup_name\": \"Roughing Setup\", \"toolpath_name\": \"Adaptive Clearing\", \"folder\": null},\n            \"op_002\": {\"setup_id\": \"setup_001\", \"setup_name\": \"Roughing Setup\", \"toolpath_name\": \"Pocket\", \"folder\": null},\n            \"op_003\": {\"setup_id\": \"setup_002\", \"setup_name\": \"Finishing Setup\", \"toolpath_name\": \"Contour\", \"folder\": null}\n        },\n        \"total_setups\": 2,\n        \"total_toolpaths\": 3,\n        \"message\": \"Mapped 3 toolpath(s) across 2 setup(s)\"\n    }\n\nTypical use cases:\n- Understanding CAM document structure\n- Validating setup-toolpath relationships\n- Building UI representations of CAM hierarchy\n\nRequirements: 11.1, 11.2, 11.3, 11.4\n"
+      },
+      "get_part_position": {
+        "name": "get_part_position",
+        "module": "tools.cam.setups",
+        "parameters": [
+          {
+            "name": "setup_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(setup_id: str) -> dict",
+        "docstring": "\nGet the part position configuration for a CAM setup.\n\nThis tool retrieves the part position and orientation relative to the Work\nCoordinate System (WCS) for a specific setup. Part position defines how the\npart geometry is positioned within the setup's coordinate system.\n\nArgs:\n    setup_id: Unique identifier of the setup to query. Must match exactly\n             what was returned by list_cam_setups()\n\nReturns:\n    dict: Part position information\n          Success response includes:\n          - setup_id: Setup identifier\n          - setup_name: Setup name\n          - origin: Position coordinates {x, y, z} in centimeters\n          - orientation: Axis vectors {x_axis, y_axis, z_axis}\n          - is_default: Whether using default position (True if not modified)\n          - message: Status message\n          \n          Error response includes:\n          - error: True\n          - message: Human-readable error description\n          - code: Error code (SETUP_NOT_FOUND, CAM_NOT_AVAILABLE, etc.)\n\nExample usage:\n    get_part_position(\"setup_001\")\n\nExample response:\n    {\n        \"setup_id\": \"setup_001\",\n        \"setup_name\": \"Roughing Setup\",\n        \"origin\": {\"x\": 0.0, \"y\": 0.0, \"z\": 0.0},\n        \"orientation\": {\n            \"x_axis\": [1.0, 0.0, 0.0],\n            \"y_axis\": [0.0, 1.0, 0.0],\n            \"z_axis\": [0.0, 0.0, 1.0]\n        },\n        \"is_default\": true,\n        \"message\": \"Part position retrieved for setup 'Roughing Setup'\"\n    }\n\nTypical use cases:\n- Inspecting current part position before modification\n- Verifying part alignment relative to WCS\n- Understanding setup configuration for toolpath planning\n\nRequirements: 12.1, 12.4\n"
+      },
+      "set_part_position": {
+        "name": "set_part_position",
+        "module": "tools.cam.setups",
+        "parameters": [
+          {
+            "name": "setup_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "position",
+            "annotation": "<class 'dict'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "orientation",
+            "annotation": "<class 'dict'>",
+            "default": "None",
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(setup_id: str, position: dict, orientation: dict = None) -> dict",
+        "docstring": "\nSet the part position and orientation relative to WCS for a CAM setup.\n\nThis tool configures the part position within a setup's coordinate system.\nPart position changes affect all toolpaths in the setup and may require\ntoolpath regeneration.\n\nArgs:\n    setup_id: Unique identifier of the setup to modify\n    position: Position dictionary with x, y, z coordinates in centimeters.\n             Example: {\"x\": 10.0, \"y\": 5.0, \"z\": 0.0}\n    orientation: Optional orientation dictionary with axis vectors.\n                If not provided, current orientation is preserved.\n                Example: {\n                    \"x_axis\": [1.0, 0.0, 0.0],\n                    \"y_axis\": [0.0, 1.0, 0.0]\n                }\n                Note: z_axis is calculated from cross product of x and y axes.\n\nReturns:\n    dict: Result of the position update\n          Success response includes:\n          - setup_id: Setup identifier\n          - setup_name: Setup name\n          - origin: Updated position coordinates {x, y, z}\n          - orientation: Updated axis vectors {x_axis, y_axis, z_axis}\n          - position_updated: Whether position was actually modified\n          - warnings: Array of warnings about impacts on operations\n          - requires_regeneration: Whether toolpaths need regeneration\n          - affected_operations: Number of operations affected\n          - message: Status message\n          \n          Error response includes:\n          - error: True\n          - message: Human-readable error description\n          - code: Error code (SETUP_NOT_FOUND, PART_POSITION_INVALID, etc.)\n          - validation_issues: Array of validation issues (if applicable)\n\nExample usage:\n    # Set position only\n    set_part_position(\"setup_001\", {\"x\": 10.0, \"y\": 5.0, \"z\": 0.0})\n    \n    # Set position and orientation\n    set_part_position(\n        \"setup_001\",\n        {\"x\": 10.0, \"y\": 5.0, \"z\": 0.0},\n        {\n            \"x_axis\": [1.0, 0.0, 0.0],\n            \"y_axis\": [0.0, 1.0, 0.0]\n        }\n    )\n\nExample response:\n    {\n        \"setup_id\": \"setup_001\",\n        \"setup_name\": \"Roughing Setup\",\n        \"origin\": {\"x\": 10.0, \"y\": 5.0, \"z\": 0.0},\n        \"orientation\": {\n            \"x_axis\": [1.0, 0.0, 0.0],\n            \"y_axis\": [0.0, 1.0, 0.0],\n            \"z_axis\": [0.0, 0.0, 1.0]\n        },\n        \"position_updated\": true,\n        \"warnings\": [\"Part position change will affect 3 existing operation(s). All toolpaths will need regeneration.\"],\n        \"requires_regeneration\": true,\n        \"affected_operations\": 3,\n        \"message\": \"Part position updated for setup 'Roughing Setup'\"\n    }\n\nImportant notes:\n- All position values are in centimeters (Fusion 360 internal units)\n- Position changes affect all toolpaths in the setup\n- Toolpaths may need regeneration after position changes\n- Orientation axes should be perpendicular (will be orthogonalized if not)\n\nRequirements: 12.1, 12.2, 12.3, 12.5\n"
+      }
+    },
+    "toolpath_operations": {
+      "list_cam_toolpaths": {
+        "name": "list_cam_toolpaths",
+        "module": "tools.cam.toolpaths",
+        "parameters": [],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "() -> dict",
+        "docstring": "\nYou can list all CAM toolpath operations in the current Fusion 360 document.\n\nThis is typically the first tool you call when working with CAM data.\nUse this to discover what operations exist before inspecting specific toolpath parameters.\n\nEach toolpath includes: id, name, operation type, tool name, and validity status.\nToolpaths are organized by their parent setup.\n\nIMPORTANT: If no CAM data exists in the document, you'll get an empty list with a message.\n\nExample response:\n{\n    \"setups\": [\n        {\n            \"id\": \"setup_001\",\n            \"name\": \"Setup1\",\n            \"toolpaths\": [\n                {\n                    \"id\": \"op_001\",\n                    \"name\": \"Adaptive1\",\n                    \"type\": \"adaptive\",\n                    \"tool_name\": \"6mm Flat Endmill\",\n                    \"tool_id\": \"tool_001\",\n                    \"is_valid\": true\n                }\n            ]\n        }\n    ],\n    \"total_count\": 1,\n    \"message\": null\n}\n\nTypical use cases: Getting an overview of machining operations, finding toolpath IDs for further inspection.\n"
+      },
+      "get_toolpath_details": {
+        "name": "get_toolpath_details",
+        "module": "tools.cam.toolpaths",
+        "parameters": [
+          {
+            "name": "toolpath_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(toolpath_id: str) -> dict",
+        "docstring": "\nYou can get detailed parameters for a specific CAM toolpath operation.\n\nUse this after list_cam_toolpaths() to inspect the full parameters of a specific operation.\nYou need the toolpath_id from the list_cam_toolpaths response.\n\nReturns feeds/speeds, geometry settings, heights, tool information, and tool settings.\nEach parameter includes: value, unit, type, constraints, and whether it's editable.\n\nIMPORTANT: The toolpath_id must match exactly what was returned by list_cam_toolpaths.\nIf the toolpath doesn't exist, you'll get a TOOLPATH_NOT_FOUND error.\n\nParameters returned include:\n- feeds_and_speeds: spindle_speed, cutting_feedrate, plunge_feedrate, ramp_feedrate\n- geometry: stepover, stepdown, tolerance, stock_to_leave\n- heights: clearance_height, retract_height, feed_height\n- tool_settings: Preset cutting parameters from the tool library (see below)\n\nTool Settings Section:\nThe response includes a tool_settings section with preset cutting parameters stored\nin the tool library. These are the manufacturer or user-defined defaults for the tool:\n- preset_spindle_speed: Default spindle speed in RPM (e.g., 10000)\n- surface_speed: Recommended surface speed in m/min (e.g., 200)\n- feed_per_tooth: Feed per tooth in mm (e.g., 0.05)\n- ramp_spindle_speed: Spindle speed for ramping moves in RPM (e.g., 8000)\n- plunge_spindle_speed: Spindle speed for plunge moves in RPM (e.g., 5000)\n- feed_per_revolution: Feed per revolution in mm/rev (e.g., 0.2)\n\nExample tool_settings in response:\n{\n    \"tool_settings\": {\n        \"preset_spindle_speed\": {\"value\": 10000, \"unit\": \"rpm\", \"type\": \"numeric\"},\n        \"surface_speed\": {\"value\": 200, \"unit\": \"m/min\", \"type\": \"numeric\"},\n        \"feed_per_tooth\": {\"value\": 0.05, \"unit\": \"mm\", \"type\": \"numeric\"},\n        \"ramp_spindle_speed\": {\"value\": 8000, \"unit\": \"rpm\", \"type\": \"numeric\"},\n        \"plunge_spindle_speed\": {\"value\": 5000, \"unit\": \"rpm\", \"type\": \"numeric\"},\n        \"feed_per_revolution\": {\"value\": 0.2, \"unit\": \"mm/rev\", \"type\": \"numeric\"}\n    }\n}\n\nExample request:\n{\n    \"toolpath_id\": \"op_001\"\n}\n\nTypical use cases: Analyzing current machining parameters, comparing operation parameters\nagainst tool presets, preparing to suggest optimizations, checking if parameters are \neditable before attempting modification.\n"
+      },
+      "list_toolpaths_with_heights": {
+        "name": "list_toolpaths_with_heights",
+        "module": "tools.cam.toolpaths",
+        "parameters": [],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "() -> dict",
+        "docstring": "\nSie k\u00f6nnen alle CAM-Werkzeugbahnen mit ihren H\u00f6henparametern in einem einzigen Aufruf auflisten.\n\nDieses Tool kombiniert die Werkzeugbahn-Auflistung mit der H\u00f6henparameter-Extraktion und bietet\neine umfassende \u00dcbersicht \u00fcber alle Bearbeitungsoperationen einschlie\u00dflich kritischer H\u00f6heninformationen.\n\nJede Werkzeugbahn enth\u00e4lt:\n- Grundlegende Informationen: ID, Name, Operationstyp, Werkzeugname, G\u00fcltigkeitsstatus\n- H\u00f6henparameter: Freifahrh\u00f6he, R\u00fcckzugsh\u00f6he, Anfahrh\u00f6he, obere und untere H\u00f6he\n- Parametermetadaten: Werte, Einheiten, Ausdr\u00fccke und Bearbeitbarkeit\n\nWICHTIG: Wenn keine CAM-Daten im Dokument vorhanden sind, erhalten Sie eine leere Liste mit einer Nachricht.\nH\u00f6henparameter werden nur f\u00fcr Werkzeugbahnen zur\u00fcckgegeben, die diese Parameter definiert haben.\n\nBeispielantwort:\n{\n    \"setups\": [\n        {\n            \"id\": \"setup_001\",\n            \"name\": \"Setup1\",\n            \"toolpaths\": [\n                {\n                    \"id\": \"op_001\",\n                    \"name\": \"Adaptive1\",\n                    \"type\": \"adaptive\",\n                    \"tool_name\": \"6mm Flat Endmill\",\n                    \"tool_id\": \"tool_001\",\n                    \"is_valid\": true,\n                    \"heights\": {\n                        \"clearance_height\": {\n                            \"value\": 25.0,\n                            \"unit\": \"mm\",\n                            \"expression\": \"stockTop + 5mm\",\n                            \"type\": \"numeric\",\n                            \"editable\": true\n                        },\n                        \"retract_height\": {\n                            \"value\": 15.0,\n                            \"unit\": \"mm\",\n                            \"expression\": \"stockTop\",\n                            \"type\": \"numeric\",\n                            \"editable\": true\n                        }\n                    }\n                }\n            ]\n        }\n    ],\n    \"total_count\": 1,\n    \"message\": null\n}\n\nTypische Anwendungsf\u00e4lle: Vollst\u00e4ndige \u00dcbersicht \u00fcber Bearbeitungsoperationen mit H\u00f6heninformationen,\nAnalyse von Sicherheitsh\u00f6hen f\u00fcr Kollisionsvermeidung, Vorbereitung f\u00fcr H\u00f6henoptimierungen.\n\nRequirements: 1.1, 1.4, 2.1\n"
+      },
+      "analyze_toolpath_sequence": {
+        "name": "analyze_toolpath_sequence",
+        "module": "tools.cam.toolpaths",
+        "parameters": [
+          {
+            "name": "setup_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(setup_id: str) -> dict",
+        "docstring": "\nSie k\u00f6nnen eine detaillierte Sequenzanalyse f\u00fcr alle Werkzeugbahnen in einem spezifischen CAM-Setup durchf\u00fchren.\n\nVerwenden Sie dieses Tool nach list_cam_toolpaths(), um die Ausf\u00fchrungsreihenfolge und Abh\u00e4ngigkeiten \naller Werkzeugbahnen in einem Setup zu analysieren. Sie ben\u00f6tigen die setup_id aus der Antwort von list_cam_toolpaths.\n\nGibt vollst\u00e4ndige Sequenzanalyse zur\u00fcck einschlie\u00dflich:\n- Ausf\u00fchrungsreihenfolge: Vollst\u00e4ndige Kette mit Ausf\u00fchrungsreihenfolge aller Operationen\n- Werkzeugwechsel: Identifikation von Werkzeugwechseln und deren Auswirkung auf die Bearbeitungszeit\n- Abh\u00e4ngigkeiten: Operationen die vor anderen abgeschlossen werden m\u00fcssen\n- Optimierungsempfehlungen: Vorschl\u00e4ge zur Neuordnung oder Neugruppierung von Strategien\n- Zeitsch\u00e4tzungen: Gesch\u00e4tzte Bearbeitungszeiten und Effizienzmetriken\n\nJede Operation enth\u00e4lt: Reihenfolge, Werkzeug-ID, gesch\u00e4tzte Zeit, Abh\u00e4ngigkeiten und Pass-Anzahl.\n\nWICHTIG: Die setup_id muss genau mit der von list_cam_toolpaths zur\u00fcckgegebenen \u00fcbereinstimmen.\nWenn das Setup nicht existiert, erhalten Sie einen SETUP_NOT_FOUND-Fehler.\nWenn das Setup keine Werkzeugbahnen enth\u00e4lt, wird eine leere Sequenz zur\u00fcckgegeben.\n\nBeispielanfrage:\n{\n    \"setup_id\": \"setup_001\"\n}\n\nBeispielantwort:\n{\n    \"setup_id\": \"setup_001\",\n    \"setup_name\": \"Setup1\",\n    \"total_toolpaths\": 5,\n    \"execution_sequence\": [\n        {\n            \"order\": 1,\n            \"toolpath_id\": \"op_001\",\n            \"toolpath_name\": \"Adaptive Clearing\",\n            \"tool_id\": \"tool_001\",\n            \"tool_name\": \"6mm Flat Endmill\",\n            \"estimated_time\": \"15:30\",\n            \"dependencies\": [],\n            \"pass_count\": 1\n        },\n        {\n            \"order\": 2,\n            \"toolpath_id\": \"op_002\", \n            \"toolpath_name\": \"Contour Finishing\",\n            \"tool_id\": \"tool_002\",\n            \"tool_name\": \"3mm Ball Endmill\",\n            \"estimated_time\": \"8:45\",\n            \"dependencies\": [\"op_001\"],\n            \"pass_count\": 2\n        },\n        {\n            \"order\": 3,\n            \"toolpath_id\": \"op_003\",\n            \"toolpath_name\": \"Drilling\",\n            \"tool_id\": \"tool_003\",\n            \"tool_name\": \"5mm Drill\",\n            \"estimated_time\": \"2:15\",\n            \"dependencies\": [],\n            \"pass_count\": 1\n        }\n    ],\n    \"tool_changes\": [\n        {\n            \"after_toolpath\": \"op_001\",\n            \"from_tool\": \"tool_001\",\n            \"to_tool\": \"tool_002\",\n            \"change_time\": \"2:00\"\n        },\n        {\n            \"after_toolpath\": \"op_002\",\n            \"from_tool\": \"tool_002\",\n            \"to_tool\": \"tool_003\",\n            \"change_time\": \"1:30\"\n        }\n    ],\n    \"optimization_recommendations\": [\n        {\n            \"type\": \"tool_change_reduction\",\n            \"description\": \"Erw\u00e4gen Sie die Neuordnung von Operationen zur Minimierung von Werkzeugwechseln\",\n            \"potential_savings\": \"4:00\",\n            \"suggested_order\": [\"op_001\", \"op_003\", \"op_002\"]\n        },\n        {\n            \"type\": \"dependency_optimization\",\n            \"description\": \"Operation op_003 kann parallel zu op_001 ausgef\u00fchrt werden\",\n            \"potential_savings\": \"2:15\"\n        }\n    ],\n    \"total_estimated_time\": \"29:00\",\n    \"total_tool_changes\": 2,\n    \"efficiency_score\": 0.85\n}\n\nM\u00f6gliche Fehler:\n- SETUP_NOT_FOUND: Die setup_id existiert nicht\n- CAM_NOT_AVAILABLE: Kein CAM-Arbeitsbereich oder keine CAM-Daten\n- CONNECTION_ERROR: Verbindung zu Fusion 360 fehlgeschlagen\n- EMPTY_SETUP: Setup enth\u00e4lt keine Werkzeugbahnen\n\nTypische Anwendungsf\u00e4lle: Optimierung von Bearbeitungssequenzen, Analyse von Werkzeugwechseln,\nIdentifikation von Abh\u00e4ngigkeiten, Zeitsch\u00e4tzung f\u00fcr Bearbeitungsprojekte.\n\nRequirements: 2.1, 2.2, 2.4, 3.4, 5.5\n"
+      }
+    },
+    "tool_management": {
+      "list_cam_tools": {
+        "name": "list_cam_tools",
+        "module": "tools.cam.tools",
+        "parameters": [],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "() -> dict",
+        "docstring": "\nYou can list all cutting tools available in the CAM tool libraries.\n\nThis shows all tools from all tool libraries in the current Fusion 360 document.\nUse this to discover available tools before getting detailed information with get_tool_info().\n\nEach tool includes: id, name, type, tool number, and basic geometry (diameter, length).\nTools are organized by their parent library.\n\nIMPORTANT: If no tools are found, the document may not have any tool libraries loaded.\n\nExample response:\n{\n    \"libraries\": [\n        {\n            \"name\": \"My Tool Library\",\n            \"id\": \"lib_001\", \n            \"tools\": [\n                {\n                    \"id\": \"tool_001\",\n                    \"name\": \"6mm Flat Endmill\",\n                    \"type\": \"flat end mill\",\n                    \"number\": 1,\n                    \"diameter\": 6.0,\n                    \"overall_length\": 50.0\n                }\n            ]\n        }\n    ],\n    \"total_count\": 1,\n    \"message\": null\n}\n\nTypical use cases: Discovering available tools, finding tool IDs for detailed inspection.\n"
+      },
+      "get_tool_info": {
+        "name": "get_tool_info",
+        "module": "tools.cam.tools",
+        "parameters": [
+          {
+            "name": "tool_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(tool_id: str) -> dict",
+        "docstring": "\nYou can get usage information about a specific cutting tool across all operations.\n\nUse this to see which operations use a specific tool and get tool specifications.\nYou get the tool_id from list_cam_tools() or from get_toolpath_details() (in the tool section).\n\nReturns tool usage data including:\n- Tool info: id, name, type, diameter, overall_length\n- Operations using this tool: list of operation names and IDs\n- Usage count across the document\n\nIMPORTANT: Tool dimensions are in the document's unit system (typically mm).\nRemember: In Fusion 360, 1 unit = 1 cm = 10 mm, so a 6mm tool shows as 0.6.\n\nExample:\n{\n    \"tool_id\": \"tool_001\"\n}\n\nExample response:\n{\n    \"tool\": {\n        \"id\": \"tool_001\",\n        \"name\": \"6mm Flat Endmill\",\n        \"type\": \"flat end mill\",\n        \"diameter\": 6.0,\n        \"overall_length\": 50.0\n    },\n    \"operations\": [\n        {\"id\": \"op_001\", \"name\": \"Adaptive1\", \"setup\": \"Setup1\"}\n    ],\n    \"usage_count\": 1\n}\n\nTypical use cases: Finding which operations use a tool, checking tool utilization.\n"
+      },
+      "list_tool_libraries": {
+        "name": "list_tool_libraries",
+        "module": "tools.cam.tools",
+        "parameters": [],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "() -> dict",
+        "docstring": "\nList all accessible tool libraries in Fusion 360.\n\nReturns all tool libraries including local, cloud, and document libraries.\nThis is typically the first tool you call when working with tool library data.\n\nEach library includes: id, name, type (local/cloud/document), tool_count, and is_writable.\n"
+      },
+      "list_library_tools": {
+        "name": "list_library_tools",
+        "module": "tools.cam.tools",
+        "parameters": [
+          {
+            "name": "library_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(library_id: str) -> dict",
+        "docstring": "\nList all tools in a specific tool library.\n\nUse this after list_tool_libraries() to browse tools in a specific library.\nYou need the library_id from the list_tool_libraries response.\n"
+      },
+      "get_tool_details": {
+        "name": "get_tool_details",
+        "module": "tools.cam.tools",
+        "parameters": [
+          {
+            "name": "tool_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(tool_id: str) -> dict",
+        "docstring": "\nGet detailed information about a specific cutting tool.\n\nReturns complete tool data including geometry, specifications, and cutting data presets.\nUse this to inspect full tool parameters before using or modifying a tool.\n"
+      }
+    },
+    "parameter_management": {
+      "modify_toolpath_parameter": {
+        "name": "modify_toolpath_parameter",
+        "module": "tools.cam.parameters",
+        "parameters": [
+          {
+            "name": "toolpath_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "parameter_name",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "value",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": null,
+        "signature_str": "(toolpath_id: str, parameter_name: str, value: str)",
+        "docstring": "\nYou can modify a parameter value for a specific CAM toolpath operation.\n\nUse this to update feeds, speeds, geometry settings, or other editable parameters.\nAlways check get_toolpath_details first to see which parameters are editable!\n\nCRITICAL: \n- The parameter must be marked as editable (editable: true in get_toolpath_details)\n- The value must be within the min/max constraints if they exist\n- Read-only parameters will return a READ_ONLY error\n\nCommon parameter names you can modify:\n- spindle_speed: Spindle RPM (e.g., \"12000\")\n- cutting_feedrate: Feed rate in mm/min (e.g., \"1500\")\n- plunge_feedrate: Plunge feed rate (e.g., \"500\")\n- stepover: Stepover percentage or distance (e.g., \"40\" for 40%)\n- stepdown: Axial depth of cut (e.g., \"2.0\")\n\nExample:\n{\n    \"toolpath_id\": \"op_001\",\n    \"parameter_name\": \"spindle_speed\",\n    \"value\": \"12000\"\n}\n\nPossible errors:\n- TOOLPATH_NOT_FOUND: The toolpath_id doesn't exist\n- INVALID_VALUE: Value is wrong type or outside valid range\n- READ_ONLY: Parameter cannot be modified\n- PARAMETER_NOT_FOUND: The parameter_name doesn't exist for this operation\n\nTypical use cases: Optimizing feeds and speeds, adjusting stepover/stepdown for better surface finish.\n"
+      }
+    },
+    "height_management": {
+      "get_toolpath_heights": {
+        "name": "get_toolpath_heights",
+        "module": "tools.cam.heights",
+        "parameters": [
+          {
+            "name": "toolpath_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(toolpath_id: str) -> dict",
+        "docstring": "\nGet detailed height information for a specific CAM toolpath.\n\nUse this tool after list_toolpaths_with_heights() or list_cam_toolpaths() to\ninspect comprehensive height parameters for a specific manufacturing operation.\nYou need the toolpath_id from the response of list_toolpaths_with_heights.\n\nReturns complete height parameters including:\n- Clearance height: Safe travel height above all obstacles\n- Retract height: Height for rapid positioning moves\n- Feed height: Height where feed rate begins\n- Top height: Upper material boundary for the operation\n- Bottom height: Lower material boundary for the operation\n\nEach parameter contains: value, unit, expression, type, editability and constraints.\n\nIMPORTANT: The toolpath_id must exactly match the one returned by list_toolpaths_with_heights.\nIf the toolpath doesn't exist, you'll get a TOOLPATH_NOT_FOUND error.\n\nExample request:\n{\n    \"toolpath_id\": \"op_001\"\n}\n\nExample response:\n{\n    \"toolpath_id\": \"op_001\",\n    \"toolpath_name\": \"Adaptive1\",\n    \"heights\": {\n        \"clearance_height\": {\n            \"value\": 25.0,\n            \"unit\": \"mm\",\n            \"expression\": \"stockTop + 5mm\",\n            \"type\": \"numeric\",\n            \"editable\": true,\n            \"min_value\": null,\n            \"max_value\": null\n        },\n        \"retract_height\": {\n            \"value\": 15.0,\n            \"unit\": \"mm\",\n            \"expression\": \"stockTop\",\n            \"type\": \"numeric\",\n            \"editable\": true,\n            \"min_value\": null,\n            \"max_value\": null\n        },\n        \"feed_height\": {\n            \"value\": 2.0,\n            \"unit\": \"mm\",\n            \"expression\": \"stockTop - 3mm\",\n            \"type\": \"numeric\",\n            \"editable\": true,\n            \"min_value\": null,\n            \"max_value\": null\n        },\n        \"top_height\": {\n            \"value\": 0.0,\n            \"unit\": \"mm\",\n            \"expression\": \"stockTop\",\n            \"type\": \"numeric\",\n            \"editable\": true,\n            \"min_value\": null,\n            \"max_value\": null\n        },\n        \"bottom_height\": {\n            \"value\": -10.0,\n            \"unit\": \"mm\",\n            \"expression\": \"stockTop - 10mm\",\n            \"type\": \"numeric\",\n            \"editable\": true,\n            \"min_value\": null,\n            \"max_value\": null\n        }\n    }\n}\n\nPossible errors:\n- TOOLPATH_NOT_FOUND: The toolpath_id doesn't exist\n- CAM_NOT_AVAILABLE: No MANUFACTURE workspace or CAM data available\n- CONNECTION_ERROR: Connection to Fusion 360 failed\n\nTypical use cases: Detailed analysis of height parameters, verification of safety heights,\npreparation for height modifications, collision avoidance.\n\nRequirements: 2.2, 3.1, 3.2, 3.3, 3.4\n"
+      }
+    },
+    "pass_management": {
+      "get_toolpath_passes": {
+        "name": "get_toolpath_passes",
+        "module": "tools.cam.passes",
+        "parameters": [
+          {
+            "name": "toolpath_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": null,
+        "signature_str": "(toolpath_id: str)",
+        "docstring": "\nSie k\u00f6nnen detaillierte Pass-Informationen f\u00fcr eine spezifische CAM-Werkzeugbahn mit Multi-Pass-Konfiguration abrufen.\n\nVerwenden Sie dieses Tool nach list_cam_toolpaths(), um umfassende Pass-Parameter f\u00fcr eine bestimmte Operation zu inspizieren.\nSie ben\u00f6tigen die toolpath_id aus der Antwort von list_cam_toolpaths.\n\nGibt vollst\u00e4ndige Pass-Konfiguration zur\u00fcck einschlie\u00dflich:\n- Pass-Typ: Identifizierung von Schrupp-, Halbschlicht- und Schlichtbearbeitungsp\u00e4ssen\n- Pass-Parameter: Tiefen, Aufma\u00dfe (Stock-to-Leave), Stepover/Stepdown-Werte\n- Pass-Reihenfolge: Ausf\u00fchrungsreihenfolge und Timing-Informationen\n- Pass-Beziehungen: Parameter-Vererbung und \u00dcberschreibungen zwischen P\u00e4ssen\n- Werkzeugwechsel: Auswirkungen verschiedener Werkzeuganforderungen auf die Bearbeitungszeit\n\nJeder Pass enth\u00e4lt: Pass-Nummer, Pass-Typ, Tiefe, Aufma\u00dfe, spezifische Parameter und Metadaten.\n\nWICHTIG: Die toolpath_id muss genau mit der von list_cam_toolpaths zur\u00fcckgegebenen \u00fcbereinstimmen.\nWenn die Werkzeugbahn nicht existiert, erhalten Sie einen TOOLPATH_NOT_FOUND-Fehler.\nWenn die Operation keine Multi-Pass-Konfiguration hat, wird eine einfache Pass-Struktur zur\u00fcckgegeben.\n\nBeispielanfrage:\n{\n    \"toolpath_id\": \"op_001\"\n}\n\nBeispielantwort:\n{\n    \"toolpath_id\": \"op_001\",\n    \"toolpath_name\": \"Adaptive1\",\n    \"pass_configuration\": {\n        \"pass_type\": \"multiple_depths\",\n        \"total_passes\": 3,\n        \"passes\": [\n            {\n                \"pass_number\": 1,\n                \"pass_type\": \"roughing\",\n                \"depth\": -5.0,\n                \"stock_to_leave\": {\n                    \"radial\": 0.5,\n                    \"axial\": 0.2\n                },\n                \"parameters\": {\n                    \"stepover\": 60,\n                    \"stepdown\": 2.0,\n                    \"feedrate\": 2000\n                }\n            },\n            {\n                \"pass_number\": 2,\n                \"pass_type\": \"semi_finishing\",\n                \"depth\": -5.0,\n                \"stock_to_leave\": {\n                    \"radial\": 0.1,\n                    \"axial\": 0.05\n                },\n                \"parameters\": {\n                    \"stepover\": 40,\n                    \"stepdown\": 1.0,\n                    \"feedrate\": 1500\n                }\n            },\n            {\n                \"pass_number\": 3,\n                \"pass_type\": \"finishing\",\n                \"depth\": -5.0,\n                \"stock_to_leave\": {\n                    \"radial\": 0.0,\n                    \"axial\": 0.0\n                },\n                \"parameters\": {\n                    \"stepover\": 20,\n                    \"stepdown\": 0.5,\n                    \"feedrate\": 1000\n                }\n            }\n        ],\n        \"spring_passes\": 1,\n        \"finishing_enabled\": true\n    },\n    \"tool_changes\": [\n        {\n            \"after_pass\": 1,\n            \"from_tool\": \"tool_001\",\n            \"to_tool\": \"tool_002\",\n            \"estimated_change_time\": \"2:00\"\n        }\n    ],\n    \"execution_order\": [1, 2, 3],\n    \"estimated_total_time\": \"15:30\"\n}\n\nM\u00f6gliche Fehler:\n- TOOLPATH_NOT_FOUND: Die toolpath_id existiert nicht\n- CAM_NOT_AVAILABLE: Kein CAM-Arbeitsbereich oder keine CAM-Daten\n- CONNECTION_ERROR: Verbindung zu Fusion 360 fehlgeschlagen\n\nTypische Anwendungsf\u00e4lle: Analyse von Multi-Pass-Strategien, Optimierung von Bearbeitungssequenzen,\n\u00dcberpr\u00fcfung von Pass-Parametern, Vorbereitung f\u00fcr Pass-Modifikationen.\n\nRequirements: 1.1, 1.2, 1.4, 1.5, 3.1, 3.2, 3.3\n"
+      },
+      "modify_toolpath_passes": {
+        "name": "modify_toolpath_passes",
+        "module": "tools.cam.passes",
+        "parameters": [
+          {
+            "name": "toolpath_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "pass_config",
+            "annotation": "<class 'dict'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": null,
+        "signature_str": "(toolpath_id: str, pass_config: dict)",
+        "docstring": "\nSie k\u00f6nnen die Pass-Konfiguration f\u00fcr eine spezifische CAM-Werkzeugbahn mit Multi-Pass-Operationen modifizieren.\n\nVerwenden Sie dieses Tool nach get_toolpath_passes(), um Pass-Parameter f\u00fcr eine bestimmte Operation zu \u00e4ndern.\nSie ben\u00f6tigen die toolpath_id aus der Antwort von list_cam_toolpaths oder get_toolpath_passes.\n\nKRITISCH: \n- Die Pass-Konfiguration muss gegen Werkzeugbahn-Beschr\u00e4nkungen und Abh\u00e4ngigkeiten validiert werden\n- \u00c4nderungen m\u00fcssen logische Bearbeitungsabfolge einhalten (Schruppen vor Schlichten)\n- Abh\u00e4ngige Parameter werden automatisch aktualisiert\n- Nur editierbare Parameter k\u00f6nnen ge\u00e4ndert werden\n\nModifizierbare Pass-Parameter:\n- Pass-Typ: \u00c4nderung von Schrupp-, Halbschlicht- und Schlichtbearbeitungsp\u00e4ssen\n- Pass-Tiefen: Anpassung der Schnittiefen f\u00fcr jeden Pass\n- Aufma\u00dfe (Stock-to-Leave): Radiale und axiale Aufma\u00dfe f\u00fcr nachfolgende P\u00e4sse\n- Pass-spezifische Parameter: Stepover, Stepdown, Vorschubgeschwindigkeiten\n- Spring-P\u00e4sse: Anzahl der Nachschnitt-P\u00e4sse f\u00fcr bessere Oberfl\u00e4chenqualit\u00e4t\n\nBeispielanfrage:\n{\n    \"toolpath_id\": \"op_001\",\n    \"pass_config\": {\n        \"pass_type\": \"multiple_depths\",\n        \"passes\": [\n            {\n                \"pass_number\": 1,\n                \"pass_type\": \"roughing\",\n                \"depth\": -6.0,\n                \"stock_to_leave\": {\n                    \"radial\": 0.3,\n                    \"axial\": 0.1\n                },\n                \"parameters\": {\n                    \"stepover\": 70,\n                    \"feedrate\": 2500\n                }\n            },\n            {\n                \"pass_number\": 2,\n                \"pass_type\": \"finishing\",\n                \"depth\": -6.0,\n                \"stock_to_leave\": {\n                    \"radial\": 0.0,\n                    \"axial\": 0.0\n                },\n                \"parameters\": {\n                    \"stepover\": 30,\n                    \"feedrate\": 1200\n                }\n            }\n        ],\n        \"spring_passes\": 2,\n        \"finishing_enabled\": true\n    }\n}\n\nBeispielantwort:\n{\n    \"success\": true,\n    \"message\": \"Pass-Konfiguration erfolgreich ge\u00e4ndert f\u00fcr Werkzeugbahn 'op_001'\",\n    \"previous_config\": {\n        \"pass_type\": \"single\",\n        \"total_passes\": 1,\n        \"passes\": [...]\n    },\n    \"new_config\": {\n        \"pass_type\": \"multiple_depths\",\n        \"total_passes\": 2,\n        \"passes\": [...]\n    },\n    \"validation_result\": {\n        \"valid\": true,\n        \"errors\": [],\n        \"warnings\": [\"Significant change in stepover: 40 \u2192 70\"]\n    },\n    \"applied_changes\": [\n        {\n            \"parameter\": \"pass_1_stepover\",\n            \"previous_value\": 40,\n            \"new_value\": 70,\n            \"type\": \"pass_parameter\"\n        }\n    ]\n}\n\nM\u00f6gliche Fehler:\n- TOOLPATH_NOT_FOUND: Die toolpath_id existiert nicht\n- VALIDATION_FAILED: Pass-Konfiguration verletzt Beschr\u00e4nkungen oder logische Reihenfolge\n- PARAMETER_READ_ONLY: Versuch, schreibgesch\u00fctzte Parameter zu \u00e4ndern\n- TOOL_INCOMPATIBLE: Pass-Parameter sind nicht mit dem aktuellen Werkzeug kompatibel\n- APPLICATION_ERROR: Fehler beim Anwenden der \u00c4nderungen\n\nTypische Anwendungsf\u00e4lle: Optimierung von Multi-Pass-Strategien, Anpassung von Aufma\u00dfen,\nFeinabstimmung von Pass-Parametern, Hinzuf\u00fcgung von Schlichtp\u00e4ssen.\n\nRequirements: 4.1, 4.2, 4.3, 4.5\n"
+      }
+    },
+    "linking_management": {
+      "get_toolpath_linking": {
+        "name": "get_toolpath_linking",
+        "module": "tools.cam.linking",
+        "parameters": [
+          {
+            "name": "toolpath_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": "<class 'dict'>",
+        "signature_str": "(toolpath_id: str) -> dict",
+        "docstring": "\nSie k\u00f6nnen detaillierte Linking-Parameter f\u00fcr eine spezifische CAM-Werkzeugbahn abrufen.\n\nVerwenden Sie dieses Tool nach list_cam_toolpaths(), um operationsspezifische Linking-Parameter \nf\u00fcr eine bestimmte Operation zu inspizieren. Sie ben\u00f6tigen die toolpath_id aus der Antwort von list_cam_toolpaths.\n\nGibt vollst\u00e4ndige Linking-Konfiguration zur\u00fcck, organisiert nach Dialog-Abschnitten:\n- 2D Pocket Operationen: \"Leads & Transitions\" Abschnitt mit Lead-In/Lead-Out-Typ, \u00dcbergangstyp, Bogenradius\n- Trace Operationen: Operationsspezifische Abschnitte mit Kontaktpunkt, Anfahrt-/R\u00fcckzugsdistanzen, \u00dcberg\u00e4nge\n- 3D Operationen: \"Linking\" Abschnitt mit Anfahrtstyp, R\u00fcckzugstyp, Freifahrth\u00f6hen\n- Editierbare Parameter: Identifikation welche Parameter f\u00fcr den jeweiligen Operationstyp verf\u00fcgbar sind\n\nJeder Parameter enth\u00e4lt: Wert, Einheit, Typ, Bearbeitbarkeit und operationsspezifische Beschr\u00e4nkungen.\n\nWICHTIG: Die toolpath_id muss genau mit der von list_cam_toolpaths zur\u00fcckgegebenen \u00fcbereinstimmen.\nWenn die Werkzeugbahn nicht existiert, erhalten Sie einen TOOLPATH_NOT_FOUND-Fehler.\nDie Parameter werden genau so gruppiert, wie sie in Fusion 360's CAM-Interface erscheinen.\n\nBeispielanfrage:\n{\n    \"toolpath_id\": \"op_001\"\n}\n\nBeispielantwort f\u00fcr 2D Pocket Operation:\n{\n    \"toolpath_id\": \"op_001\",\n    \"toolpath_name\": \"2D Pocket1\",\n    \"operation_type\": \"2d_pocket\",\n    \"linking_configuration\": {\n        \"sections\": {\n            \"leads_and_transitions\": {\n                \"lead_in\": {\n                    \"type\": \"arc\",\n                    \"arc_radius\": 2.0,\n                    \"arc_sweep\": 90,\n                    \"vertical_lead_in\": false,\n                    \"minimum_arc_radius\": 0.1\n                },\n                \"lead_out\": {\n                    \"type\": \"arc\", \n                    \"arc_radius\": 2.0,\n                    \"arc_sweep\": 90,\n                    \"vertical_lead_out\": false\n                },\n                \"transitions\": {\n                    \"type\": \"stay_down\",\n                    \"lift_height\": 1.0,\n                    \"order_by_depth\": true,\n                    \"keep_tool_down\": true\n                }\n            },\n            \"entry_positioning\": {\n                \"clearance_height\": 25.0,\n                \"feed_height\": 2.0,\n                \"top_height\": 0.0\n            }\n        },\n        \"editable_parameters\": [\n            \"leads_and_transitions.lead_in.arc_radius\",\n            \"leads_and_transitions.lead_out.arc_radius\",\n            \"leads_and_transitions.transitions.type\"\n        ]\n    }\n}\n\nBeispielantwort f\u00fcr 3D Operation:\n{\n    \"toolpath_id\": \"op_002\",\n    \"toolpath_name\": \"3D Adaptive1\",\n    \"operation_type\": \"3d_adaptive\",\n    \"linking_configuration\": {\n        \"sections\": {\n            \"linking\": {\n                \"approach\": {\n                    \"type\": \"perpendicular\",\n                    \"distance\": 5.0,\n                    \"angle\": 0.0\n                },\n                \"retract\": {\n                    \"type\": \"perpendicular\", \n                    \"distance\": 5.0,\n                    \"angle\": 0.0\n                },\n                \"clearance\": {\n                    \"height\": 25.0,\n                    \"type\": \"from_stock_top\"\n                }\n            },\n            \"transitions\": {\n                \"stay_down_distance\": 2.0,\n                \"lift_height\": 1.0,\n                \"order_optimization\": \"by_geometry\"\n            }\n        },\n        \"editable_parameters\": [\n            \"linking.approach.distance\",\n            \"linking.retract.distance\",\n            \"linking.clearance.height\"\n        ]\n    }\n}\n\nM\u00f6gliche Fehler:\n- TOOLPATH_NOT_FOUND: Die toolpath_id existiert nicht\n- CAM_NOT_AVAILABLE: Kein CAM-Arbeitsbereich oder keine CAM-Daten\n- CONNECTION_ERROR: Verbindung zu Fusion 360 fehlgeschlagen\n- OPERATION_NOT_SUPPORTED: Operationstyp unterst\u00fctzt keine Linking-Parameter\n\nTypische Anwendungsf\u00e4lle: Analyse von Linking-Strategien, Optimierung von Werkzeugbewegungen,\n\u00dcberpr\u00fcfung von Lead-In/Lead-Out-Konfigurationen, Vorbereitung f\u00fcr Linking-Modifikationen.\n\nRequirements: 7.1, 7.2, 7.3, 7.4, 7.5\n"
+      },
+      "modify_toolpath_linking": {
+        "name": "modify_toolpath_linking",
+        "module": "tools.cam.linking",
+        "parameters": [
+          {
+            "name": "toolpath_id",
+            "annotation": "<class 'str'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          },
+          {
+            "name": "linking_config",
+            "annotation": "<class 'dict'>",
+            "default": null,
+            "kind": "POSITIONAL_OR_KEYWORD"
+          }
+        ],
+        "return_annotation": null,
+        "signature_str": "(toolpath_id: str, linking_config: dict)",
+        "docstring": "\nSie k\u00f6nnen die Linking-Parameter f\u00fcr eine spezifische CAM-Werkzeugbahn modifizieren.\n\nVerwenden Sie dieses Tool nach get_toolpath_linking(), um operationsspezifische Linking-Parameter \nf\u00fcr eine bestimmte Operation zu \u00e4ndern. Sie ben\u00f6tigen die toolpath_id aus der Antwort von list_cam_toolpaths.\n\nKRITISCH:\n- Linking-Parameter m\u00fcssen gegen operationsspezifische Beschr\u00e4nkungen validiert werden\n- \u00c4nderungen m\u00fcssen mit dem Operationstyp kompatibel sein\n- Linking-Integrit\u00e4t muss aufrechterhalten werden\n- Nur editierbare Parameter k\u00f6nnen ge\u00e4ndert werden\n\nModifizierbare Linking-Parameter (operationsabh\u00e4ngig):\n- 2D Pocket: Lead-In/Lead-Out-Typ, Bogenradius, \u00dcbergangstyp, Hubh\u00f6he\n- Trace: Kontaktpunkt, Anfahrt-/R\u00fcckzugsdistanzen, \u00dcberg\u00e4nge\n- 3D Operationen: Anfahrtstyp, R\u00fcckzugstyp, Freifahrth\u00f6hen, Winkel\n- Drill: Bohrzyklus-Typ, Peck-Tiefe, Verweilzeit, R\u00fcckzugsverhalten\n\nBeispielanfrage f\u00fcr 2D Pocket:\n{\n    \"toolpath_id\": \"op_001\",\n    \"linking_config\": {\n        \"sections\": {\n            \"leads_and_transitions\": {\n                \"lead_in\": {\n                    \"type\": \"arc\",\n                    \"arc_radius\": 3.0,\n                    \"arc_sweep\": 90\n                },\n                \"lead_out\": {\n                    \"type\": \"arc\",\n                    \"arc_radius\": 3.0,\n                    \"arc_sweep\": 90\n                },\n                \"transitions\": {\n                    \"type\": \"lift\",\n                    \"lift_height\": 2.0\n                }\n            },\n            \"entry_positioning\": {\n                \"clearance_height\": 30.0,\n                \"feed_height\": 3.0\n            }\n        }\n    }\n}\n\nBeispielanfrage f\u00fcr 3D Operation:\n{\n    \"toolpath_id\": \"op_002\",\n    \"linking_config\": {\n        \"sections\": {\n            \"linking\": {\n                \"approach\": {\n                    \"type\": \"perpendicular\",\n                    \"distance\": 8.0,\n                    \"angle\": 0.0\n                },\n                \"retract\": {\n                    \"type\": \"perpendicular\",\n                    \"distance\": 8.0,\n                    \"angle\": 0.0\n                },\n                \"clearance\": {\n                    \"height\": 30.0,\n                    \"type\": \"from_stock_top\"\n                }\n            }\n        }\n    }\n}\n\nBeispielantwort:\n{\n    \"success\": true,\n    \"message\": \"Linking-Konfiguration erfolgreich ge\u00e4ndert f\u00fcr Werkzeugbahn 'op_001'\",\n    \"previous_config\": {\n        \"operation_type\": \"2d_pocket\",\n        \"sections\": {...}\n    },\n    \"new_config\": {\n        \"operation_type\": \"2d_pocket\",\n        \"sections\": {...}\n    },\n    \"validation_result\": {\n        \"valid\": true,\n        \"errors\": [],\n        \"warnings\": [\"Significant change in arc_radius: 2.0 \u2192 3.0\"]\n    },\n    \"applied_changes\": [\n        {\n            \"parameter\": \"leads_and_transitions.lead_in.arc_radius\",\n            \"fusion_parameter\": \"leadInRadius\",\n            \"previous_value\": 2.0,\n            \"new_value\": 3.0,\n            \"type\": \"linking\"\n        }\n    ]\n}\n\nM\u00f6gliche Fehler:\n- TOOLPATH_NOT_FOUND: Die toolpath_id existiert nicht\n- VALIDATION_FAILED: Linking-Konfiguration verletzt operationsspezifische Beschr\u00e4nkungen\n- PARAMETER_READ_ONLY: Versuch, schreibgesch\u00fctzte Parameter zu \u00e4ndern\n- OPERATION_NOT_SUPPORTED: Operationstyp unterst\u00fctzt keine Linking-Parameter\n- PARAMETERS_NOT_ACCESSIBLE: Parameter k\u00f6nnen nicht zugegriffen werden\n\nTypische Anwendungsf\u00e4lle: Optimierung von Werkzeugbewegungen, Anpassung von Lead-In/Lead-Out-Strategien,\nFeinabstimmung von Anfahrt-/R\u00fcckzugsbewegungen, Verbesserung der Oberfl\u00e4chenqualit\u00e4t.\n\nRequirements: 7.4, 4.4, 4.5\n"
+      }
+    }
+  },
+  "response_structures": {
+    "setup_management": {
+      "list_cam_setups": {
+        "success": true,
+        "response_type": "dict",
+        "response_keys": [
+          "error",
+          "message",
+          "code"
+        ],
+        "has_error": true,
+        "error_code": "CONNECTION_ERROR",
+        "response_sample": {
+          "error": true,
+          "message": "Cannot connect to Fusion 360. Ensure the add-in is running and you are in the MANUFACTURE workspace.",
+          "code": "CONNECTION_ERROR"
+        }
+      }
+    },
+    "toolpath_operations": {
+      "list_cam_toolpaths": {
+        "success": true,
+        "response_type": "dict",
+        "response_keys": [
+          "error",
+          "message",
+          "code"
+        ],
+        "has_error": true,
+        "error_code": "CONNECTION_ERROR",
+        "response_sample": {
+          "error": true,
+          "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+          "code": "CONNECTION_ERROR"
+        }
+      }
+    },
+    "tool_management": {
+      "list_cam_tools": {
+        "success": true,
+        "response_type": "dict",
+        "response_keys": [
+          "error",
+          "message",
+          "code"
+        ],
+        "has_error": true,
+        "error_code": "CONNECTION_ERROR",
+        "response_sample": {
+          "error": true,
+          "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+          "code": "CONNECTION_ERROR"
+        }
+      },
+      "list_tool_libraries": {
+        "success": true,
+        "response_type": "dict",
+        "response_keys": [
+          "error",
+          "message",
+          "code"
+        ],
+        "has_error": true,
+        "error_code": "CONNECTION_ERROR",
+        "response_sample": {
+          "error": true,
+          "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+          "code": "CONNECTION_ERROR"
+        }
+      }
+    },
+    "parameter_management": {},
+    "height_management": {},
+    "pass_management": {},
+    "linking_management": {}
+  }
+}

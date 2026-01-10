@@ -1,6 +1,6 @@
-# Fusion 360 MCP Bridge Documentation
+# Fusion 360 MCP Manufacturing Bridge Documentation
 
-This directory contains all documentation for the Fusion 360 MCP Bridge project.
+This directory contains all documentation for the Fusion 360 MCP Manufacturing Bridge project, focused on CAM (Computer-Aided Manufacturing) operations and toolpath management.
 
 ## Documentation Structure
 

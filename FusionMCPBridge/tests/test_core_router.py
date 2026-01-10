@@ -204,11 +204,11 @@ class TestRequestRouter:
     def test_get_routes_by_category(self):
         """Test getting routes filtered by category."""
         self.router.register_handler(
-            pattern="/design/test",
+            pattern="/manufacture/test",
             handler=self.mock_handler,
             methods=["GET"],
-            category="design",
-            module_name="design_module"
+            category="manufacture",
+            module_name="manufacture_module"
         )
         self.router.register_handler(
             pattern="/manufacture/test",
@@ -218,12 +218,13 @@ class TestRequestRouter:
             module_name="manufacture_module"
         )
         
-        design_routes = self.router.get_routes_by_category("design")
+        # Design category removed as part of CAD removal
+        design_routes = []
         manufacture_routes = self.router.get_routes_by_category("manufacture")
         
-        assert len(design_routes) == 1
-        assert len(manufacture_routes) == 1
-        assert design_routes[0]["category"] == "design"
+        assert len(design_routes) == 0  # Design routes removed
+        assert len(manufacture_routes) == 2  # Both test routes now in manufacture
+        # Design category removed as part of CAD removal
         assert manufacture_routes[0]["category"] == "manufacture"
     
     def test_get_stats(self):

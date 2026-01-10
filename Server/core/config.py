@@ -23,41 +23,6 @@ _HEADERS = {
 
 # Category-based endpoint organization
 _ENDPOINTS = {
-    "cad": {
-        # Geometry tools
-        "draw_cylinder": f"{_BASE_URL}/draw_cylinder",
-        "draw_box": f"{_BASE_URL}/Box",
-        "draw_sphere": f"{_BASE_URL}/sphere",
-        
-        # Sketching tools
-        "draw2Dcircle": f"{_BASE_URL}/create_circle",
-        "draw_lines": f"{_BASE_URL}/draw_lines",
-        "draw_one_line": f"{_BASE_URL}/draw_one_line",
-        "draw_arc": f"{_BASE_URL}/arc",
-        "spline": f"{_BASE_URL}/spline",
-        "ellipsie": f"{_BASE_URL}/ellipsis",
-        "draw_2d_rectangle": f"{_BASE_URL}/draw_2d_rectangle",
-        "draw_text": f"{_BASE_URL}/draw_text",
-        
-        # Modeling tools
-        "extrude": f"{_BASE_URL}/extrude_last_sketch",
-        "extrude_thin": f"{_BASE_URL}/extrude_thin",
-        "cut_extrude": f"{_BASE_URL}/cut_extrude",
-        "revolve": f"{_BASE_URL}/revolve",
-        "loft": f"{_BASE_URL}/loft",
-        "sweep": f"{_BASE_URL}/sweep",
-        "boolean_operation": f"{_BASE_URL}/boolean_operation",
-        
-        # Feature tools
-        "fillet_edges": f"{_BASE_URL}/fillet_edges",
-        "shell_body": f"{_BASE_URL}/shell_body",
-        "holes": f"{_BASE_URL}/holes",
-        "threaded": f"{_BASE_URL}/threaded",
-        "circular_pattern": f"{_BASE_URL}/circular_pattern",
-        "rectangular_pattern": f"{_BASE_URL}/rectangular_pattern",
-        "move_body": f"{_BASE_URL}/move_body",
-    },
-    
     "cam": {
         # Toolpath management (plural paths per REST conventions)
         "cam_toolpaths": f"{_BASE_URL}/cam/toolpaths",
@@ -103,21 +68,10 @@ _ENDPOINTS = {
     "utility": {
         # System operations
         "test_connection": f"{_BASE_URL}/test_connection",
-        "undo": f"{_BASE_URL}/undo",
-        "delete_everything": f"{_BASE_URL}/delete_everything",
-        "destroy": f"{_BASE_URL}/destroy",
-        
-        # Export operations
-        "export_step": f"{_BASE_URL}/Export_STEP",
-        "export_stl": f"{_BASE_URL}/Export_STL",
         
         # Parameter management
         "count_parameters": f"{_BASE_URL}/count_parameters",
         "list_parameters": f"{_BASE_URL}/list_parameters",
-        "change_parameter": f"{_BASE_URL}/set_parameter",
-        
-        # Legacy/special endpoints
-        "witzenmann": f"{_BASE_URL}/Witzenmann",
     },
     
     "debug": {

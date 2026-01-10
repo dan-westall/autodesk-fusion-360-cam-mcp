@@ -27,7 +27,7 @@ def register_tools(mcp_instance: FastMCP):
     mcp.tool()(change_parameter)
 
 def count():
-    """Zählt die Parameter im aktuellen Modell."""
+    """Count parameters in the current manufacturing model."""
     try:
         endpoint = get_endpoints("utility")["count_parameters"]
         return send_request(endpoint, {})
@@ -36,7 +36,7 @@ def count():
         raise
 
 def list_parameters():
-    """Listet alle Parameter im aktuellen Modell auf."""
+    """List all parameters in the current manufacturing model."""
     try:
         endpoint = get_endpoints("utility")["list_parameters"]
         return send_request(endpoint, {})
@@ -45,7 +45,7 @@ def list_parameters():
         raise
 
 def change_parameter(name: str, value: str):
-    """Ändert den Wert eines Parameters."""
+    """Change the value of a parameter in the manufacturing model."""
     try:
         endpoint = get_endpoints("utility")["change_parameter"]
         payload = {

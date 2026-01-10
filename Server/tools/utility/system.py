@@ -27,7 +27,7 @@ def register_tools(mcp_instance: FastMCP):
     mcp_instance.tool()(get_prompt_content)
 
 def test_connection():
-    """Testes die Verbindung zum Fusion 360 Server."""
+    """Test connection to Fusion 360 server."""
     try:
         endpoint = get_endpoints("utility")["test_connection"]
         return send_request(endpoint, {})
@@ -36,7 +36,7 @@ def test_connection():
         raise
 
 def delete_all():
-    """Löscht alle Objekte in der aktuellen Fusion 360-Sitzung."""
+    """Delete all objects in the current Fusion 360 session."""
     try:
         endpoint = get_endpoints("utility")["delete_everything"]
         return send_request(endpoint, {})
@@ -45,7 +45,7 @@ def delete_all():
         raise
 
 def undo():
-    """Macht die letzte Aktion rückgängig."""
+    """Undo the last operation."""
     try:
         endpoint = get_endpoints("utility")["undo"]
         return send_request(endpoint, {})
@@ -55,8 +55,10 @@ def undo():
 
 def move_latest_body(x : float,y:float,z:float):
     """
-    Du kannst den letzten Körper in Fusion 360 verschieben in x,y und z Richtung
+    Move the latest body in Fusion 360 in x, y, and z directions.
     
+    This tool is useful for positioning manufactured parts or adjusting
+    CAM setup geometry after creation.
     """
     endpoint = get_endpoints("utility")["move_body"]
     payload = {

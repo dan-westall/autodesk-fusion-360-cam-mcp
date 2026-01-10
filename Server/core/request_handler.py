@@ -103,7 +103,7 @@ def send_request(endpoint: str, data: Dict[str, Any], method: str = "POST") -> D
             if attempt == max_retries - 1:
                 return {
                     "error": True,
-                    "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+                    "message": "Cannot connect to Fusion 360. Ensure the add-in is running and you are in the MANUFACTURE workspace.",
                     "code": "CONNECTION_ERROR"
                 }
                 
@@ -112,7 +112,7 @@ def send_request(endpoint: str, data: Dict[str, Any], method: str = "POST") -> D
             if attempt == max_retries - 1:
                 return {
                     "error": True,
-                    "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+                    "message": "Request to Fusion 360 timed out. The add-in may be busy processing CAM operations.",
                     "code": "TIMEOUT_ERROR"
                 }
                 

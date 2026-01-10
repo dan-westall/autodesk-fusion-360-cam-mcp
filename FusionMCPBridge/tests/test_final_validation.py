@@ -47,15 +47,8 @@ class TestBackwardCompatibility:
     def test_existing_endpoints_preserved(self):
         """Test that all existing HTTP endpoints are preserved."""
         # Get all endpoints from configuration
-        design_endpoints = self.config.get_endpoints("design")
         manufacture_endpoints = self.config.get_endpoints("manufacture")
         system_endpoints = self.config.get_endpoints("system")
-        
-        # Verify Design workspace endpoints exist
-        assert "geometry" in design_endpoints
-        assert "sketching" in design_endpoints
-        assert "modeling" in design_endpoints
-        assert "features" in design_endpoints
         
         # Verify MANUFACTURE workspace endpoints exist
         assert "setups" in manufacture_endpoints
@@ -131,14 +124,13 @@ class TestBackwardCompatibility:
     
     def test_endpoint_paths_match_original(self):
         """Test that endpoint paths match the original monolithic implementation."""
-        design_endpoints = self.config.get_endpoints("design")
+        # Design endpoints have been removed as part of CAD removal
+        # Only CAM, utility, and system endpoints remain
+        manufacture_endpoints = self.config.get_endpoints("manufacture")
         
-        # Verify specific endpoint paths
-        assert design_endpoints["geometry"]["box"] == "/Box"
-        assert design_endpoints["geometry"]["cylinder"] == "/draw_cylinder"
-        assert design_endpoints["geometry"]["sphere"] == "/sphere"
-        assert design_endpoints["modeling"]["extrude"] == "/extrude_last_sketch"
-        assert design_endpoints["modeling"]["revolve"] == "/revolve"
+        # Verify CAM endpoint paths are preserved
+        assert "setups" in manufacture_endpoints
+        assert "toolpaths" in manufacture_endpoints
     
     def test_response_format_consistency(self):
         """Test that response formats are consistent with original implementation."""
@@ -446,7 +438,6 @@ class TestModularSystemIntegration:
         """Test that workspace categories align with Fusion 360 concepts."""
         categories = list(WorkspaceCategory)
         
-        assert WorkspaceCategory.DESIGN in categories
         assert WorkspaceCategory.MANUFACTURE in categories
         assert WorkspaceCategory.RESEARCH in categories
         assert WorkspaceCategory.SYSTEM in categories
@@ -714,10 +705,10 @@ class TestConfigurationManagement:
     
     def test_endpoint_update_propagation(self):
         """Test that endpoint updates are propagated."""
-        self.config.update_endpoint("design", "geometry", "test_endpoint", "/test/path")
+        self.config.update_endpoint("manufacture", "setups", "test_endpoint", "/test/path")
         
-        endpoints = self.config.get_endpoints("design")
-        assert endpoints["geometry"]["test_endpoint"] == "/test/path"
+        endpoints = self.config.get_endpoints("manufacture")
+        assert endpoints["setups"]["test_endpoint"] == "/test/path"
 
 
 class TestCAMEndpointPathVerification:

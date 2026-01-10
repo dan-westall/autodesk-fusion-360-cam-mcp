@@ -405,7 +405,7 @@ class ModuleLoader:
         Load a specific module with comprehensive error handling.
         
         Args:
-            module_path: Module path (e.g., "tools.cad.geometry")
+            module_path: Module path (e.g., "tools.cam.toolpaths")
             
         Returns:
             ModuleInfo or None: Module information if loaded successfully

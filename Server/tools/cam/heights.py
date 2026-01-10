@@ -25,30 +25,30 @@ def register_tools(mcp_instance: FastMCP):
 
 def get_toolpath_heights(toolpath_id: str) -> dict:
     """
-    Sie können detaillierte Höheninformationen für eine spezifische CAM-Werkzeugbahn abrufen.
+    Get detailed height information for a specific CAM toolpath.
     
-    Verwenden Sie dieses Tool nach list_toolpaths_with_heights() oder list_cam_toolpaths(), um
-    umfassende Höhenparameter für eine bestimmte Operation zu inspizieren.
-    Sie benötigen die toolpath_id aus der Antwort von list_toolpaths_with_heights.
+    Use this tool after list_toolpaths_with_heights() or list_cam_toolpaths() to
+    inspect comprehensive height parameters for a specific manufacturing operation.
+    You need the toolpath_id from the response of list_toolpaths_with_heights.
     
-    Gibt vollständige Höhenparameter zurück einschließlich:
-    - Freifahrhöhe (clearance_height): Sichere Fahrhöhe über allen Hindernissen
-    - Rückzugshöhe (retract_height): Höhe für schnelle Positionierbewegungen
-    - Anfahrhöhe (feed_height): Höhe, bei der die Vorschubgeschwindigkeit beginnt
-    - Obere Höhe (top_height): Obere Materialgrenze für die Operation
-    - Untere Höhe (bottom_height): Untere Materialgrenze für die Operation
+    Returns complete height parameters including:
+    - Clearance height: Safe travel height above all obstacles
+    - Retract height: Height for rapid positioning moves
+    - Feed height: Height where feed rate begins
+    - Top height: Upper material boundary for the operation
+    - Bottom height: Lower material boundary for the operation
     
-    Jeder Parameter enthält: Wert, Einheit, Ausdruck, Typ, Bearbeitbarkeit und Beschränkungen.
+    Each parameter contains: value, unit, expression, type, editability and constraints.
     
-    WICHTIG: Die toolpath_id muss genau mit der von list_toolpaths_with_heights zurückgegebenen übereinstimmen.
-    Wenn die Werkzeugbahn nicht existiert, erhalten Sie einen TOOLPATH_NOT_FOUND-Fehler.
+    IMPORTANT: The toolpath_id must exactly match the one returned by list_toolpaths_with_heights.
+    If the toolpath doesn't exist, you'll get a TOOLPATH_NOT_FOUND error.
     
-    Beispielanfrage:
+    Example request:
     {
         "toolpath_id": "op_001"
     }
     
-    Beispielantwort:
+    Example response:
     {
         "toolpath_id": "op_001",
         "toolpath_name": "Adaptive1",
@@ -101,13 +101,13 @@ def get_toolpath_heights(toolpath_id: str) -> dict:
         }
     }
     
-    Mögliche Fehler:
-    - TOOLPATH_NOT_FOUND: Die toolpath_id existiert nicht
-    - CAM_NOT_AVAILABLE: Kein CAM-Arbeitsbereich oder keine CAM-Daten
-    - CONNECTION_ERROR: Verbindung zu Fusion 360 fehlgeschlagen
+    Possible errors:
+    - TOOLPATH_NOT_FOUND: The toolpath_id doesn't exist
+    - CAM_NOT_AVAILABLE: No MANUFACTURE workspace or CAM data available
+    - CONNECTION_ERROR: Connection to Fusion 360 failed
     
-    Typische Anwendungsfälle: Detaillierte Analyse von Höhenparametern, Überprüfung von Sicherheitshöhen,
-    Vorbereitung für Höhenmodifikationen, Kollisionsvermeidung.
+    Typical use cases: Detailed analysis of height parameters, verification of safety heights,
+    preparation for height modifications, collision avoidance.
     
     Requirements: 2.2, 3.1, 3.2, 3.3, 3.4
     """
@@ -118,33 +118,33 @@ def get_toolpath_heights(toolpath_id: str) -> dict:
     except requests.ConnectionError:
         return {
             "error": True,
-            "message": "Kann nicht mit Fusion 360 verbinden. Stellen Sie sicher, dass das Add-In läuft.",
+            "message": "Cannot connect to Fusion 360. Ensure the add-in is running and you are in the MANUFACTURE workspace.",
             "code": "CONNECTION_ERROR"
         }
     except requests.Timeout:
         return {
             "error": True,
-            "message": "Anfrage an Fusion 360 ist abgelaufen. Das Add-In könnte beschäftigt sein.",
+            "message": "Request to Fusion 360 timed out. The add-in may be busy processing CAM operations.",
             "code": "TIMEOUT_ERROR"
         }
     except requests.RequestException as e:
         if hasattr(e, 'response') and e.response is not None and e.response.status_code == 404:
             return {
                 "error": True,
-                "message": f"Werkzeugbahn mit ID '{toolpath_id}' nicht gefunden.",
+                "message": f"Toolpath with ID '{toolpath_id}' not found. Ensure you have CAM setups with generated toolpaths.",
                 "code": "TOOLPATH_NOT_FOUND"
             }
         else:
             logging.error("Get toolpath heights failed: %s", e)
             return {
                 "error": True,
-                "message": f"Fehler beim Abrufen der Werkzeugbahn-Höhen: {str(e)}",
+                "message": f"Failed to retrieve toolpath heights: {str(e)}. Ensure you are in the MANUFACTURE workspace.",
                 "code": "UNKNOWN_ERROR"
             }
     except Exception as e:
         logging.error("Get toolpath heights failed: %s", e)
         return {
             "error": True,
-            "message": f"Fehler beim Abrufen der Werkzeugbahn-Höhen: {str(e)}",
+            "message": f"Failed to retrieve toolpath heights: {str(e)}. Ensure you are in the MANUFACTURE workspace.",
             "code": "UNKNOWN_ERROR"
         }

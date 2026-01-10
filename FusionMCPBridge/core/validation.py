@@ -252,47 +252,9 @@ request_validator = RequestValidator()
 def register_common_validation_rules():
     """Register validation rules for common endpoints"""
     
-    # Box creation validation
-    request_validator.register_validation_rules("/Box", [
-        ParameterRule("height", ParameterType.FLOAT, default=5.0, min_value=0.1),
-        ParameterRule("width", ParameterType.FLOAT, default=5.0, min_value=0.1),
-        ParameterRule("depth", ParameterType.FLOAT, default=5.0, min_value=0.1),
-        ParameterRule("x", ParameterType.FLOAT, default=0.0),
-        ParameterRule("y", ParameterType.FLOAT, default=0.0),
-        ParameterRule("z", ParameterType.FLOAT, default=0.0),
-        ParameterRule("plane", ParameterType.STRING, default="XY", allowed_values=["XY", "XZ", "YZ"])
-    ])
-    
-    # Cylinder creation validation
-    request_validator.register_validation_rules("/draw_cylinder", [
-        ParameterRule("radius", ParameterType.FLOAT, default=2.5, min_value=0.1),
-        ParameterRule("height", ParameterType.FLOAT, default=5.0, min_value=0.1),
-        ParameterRule("x", ParameterType.FLOAT, default=0.0),
-        ParameterRule("y", ParameterType.FLOAT, default=0.0),
-        ParameterRule("z", ParameterType.FLOAT, default=0.0),
-        ParameterRule("plane", ParameterType.STRING, default="XY", allowed_values=["XY", "XZ", "YZ"])
-    ])
-    
-    # Sphere creation validation
-    request_validator.register_validation_rules("/sphere", [
-        ParameterRule("radius", ParameterType.FLOAT, default=5.0, min_value=0.1),
-        ParameterRule("x", ParameterType.FLOAT, default=0.0),
-        ParameterRule("y", ParameterType.FLOAT, default=0.0),
-        ParameterRule("z", ParameterType.FLOAT, default=0.0)
-    ])
-    
-    # Move body validation
-    request_validator.register_validation_rules("/move_body", [
-        ParameterRule("x", ParameterType.FLOAT, default=0.0),
-        ParameterRule("y", ParameterType.FLOAT, default=0.0),
-        ParameterRule("z", ParameterType.FLOAT, default=0.0)
-    ])
-    
-    # Offset plane validation
-    request_validator.register_validation_rules("/offsetplane", [
-        ParameterRule("offset", ParameterType.FLOAT, default=0.0),
-        ParameterRule("plane", ParameterType.STRING, default="XY", allowed_values=["XY", "XZ", "YZ"])
-    ])
+    # CAM endpoints validation rules can be added here as needed
+    # Design workspace validation rules have been removed as part of CAD removal
+    pass
 
 # Initialize common validation rules
 register_common_validation_rules()

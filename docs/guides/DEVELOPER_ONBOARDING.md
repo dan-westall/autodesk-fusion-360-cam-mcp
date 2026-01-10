@@ -1,8 +1,8 @@
-# Developer Onboarding Guide - Fusion 360 Add-In Modular Architecture
+# Developer Onboarding Guide - Fusion 360 Manufacturing Add-In
 
-## Welcome to the Fusion 360 Add-In Development Team
+## Welcome to the Fusion 360 Manufacturing Add-In Development Team
 
-This guide will help you understand the modular architecture, set up your development environment, and start contributing effectively to the Fusion 360 Add-In project.
+This guide will help you understand the modular architecture, set up your development environment, and start contributing effectively to the Fusion 360 Manufacturing Add-In project focused on CAM (Computer-Aided Manufacturing) operations.
 
 ## Table of Contents
 
@@ -33,15 +33,15 @@ This guide will help you understand the modular architecture, set up your develo
 - **Code Editor**: VS Code, PyCharm, or similar with Python support
 
 ### Recommended Knowledge
-- **Fusion 360 Workspaces**: Understanding of Design and MANUFACTURE workspaces
-- **CAD/CAM Concepts**: Basic understanding of 3D modeling and machining
+- **Fusion 360 MANUFACTURE Workspace**: Understanding of CAM operations and toolpath generation
+- **CAM Concepts**: Understanding of machining operations, toolpaths, and manufacturing workflows
 - **Property-Based Testing**: Familiarity with Hypothesis testing framework
 
 ## Architecture Overview
 
 ### High-Level Architecture
 
-The Fusion 360 Add-In uses a modular architecture that mirrors Fusion 360's workspace organization:
+The Fusion 360 Manufacturing Add-In uses a modular architecture focused on CAM operations:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -61,8 +61,8 @@ The Fusion 360 Add-In uses a modular architecture that mirrors Fusion 360's work
 ┌─────────────────────▼───────────────────────────────────────┐
 │                Handler Modules                              │
 │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │   Design    │ │ MANUFACTURE │ │   System    │           │
-│  │  Workspace  │ │  Workspace  │ │ Operations  │           │
+│  │ MANUFACTURE │ │   System    │ │  Utility    │           │
+│  │  Workspace  │ │ Operations  │ │ Operations  │           │
 │  └─────────────┘ └─────────────┘ └─────────────┘           │
 └─────────────────────┬───────────────────────────────────────┘
                       │
@@ -72,18 +72,18 @@ The Fusion 360 Add-In uses a modular architecture that mirrors Fusion 360's work
 └─────────────────────┬───────────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────────┐
-│               Fusion 360 API                                │
+│               Fusion 360 CAM API                            │
 │                (Main UI Thread)                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Key Architectural Principles
 
-1. **Workspace Alignment**: Code organization mirrors Fusion 360's workspace structure
+1. **Manufacturing Focus**: Code organization focused on CAM operations and toolpath management
 2. **Separation of Concerns**: Each module has a single, well-defined responsibility
 3. **Thread Safety**: All Fusion 360 API calls are executed on the main UI thread
-4. **Modularity**: New functionality can be added without modifying existing code
-5. **Backward Compatibility**: All existing API contracts are preserved
+4. **Modularity**: New CAM functionality can be added without modifying existing code
+5. **Backward Compatibility**: All existing CAM API contracts are preserved
 
 ## Development Environment Setup
 
@@ -144,8 +144,7 @@ FusionMCPBridge/
 │   ├── server.py               # HTTP server management
 │   ├── error_handling.py       # Error handling system
 │   └── validation.py           # Request validation
-├── handlers/                   # Handler modules by workspace
-│   ├── design/                 # Design workspace operations
+├── handlers/                   # Handler modules by functionality
 │   ├── manufacture/            # MANUFACTURE workspace operations
 │   ├── system/                 # System operations
 │   └── research/               # Research and development
@@ -164,17 +163,17 @@ FusionMCPBridge/
 ### 1. Create or Modify Handler
 
 ```python
-# Example: Adding a new geometry operation
-# File: handlers/design/geometry.py
+# Example: Adding a new CAM operation
+# File: handlers/manufacture/operations.py
 
-def handle_new_shape(request_data: dict) -> dict:
-    """Handle new shape creation request."""
+def handle_new_operation(request_data: dict) -> dict:
+    """Handle new CAM operation creation request."""
     # Validate input
-    shape_type = request_data.get('shape_type')
-    dimensions = request_data.get('dimensions', {})
+    operation_type = request_data.get('operation_type')
+    parameters = request_data.get('parameters', {})
     
-    # Queue Fusion 360 API task
-    result = queue_task('create_shape', shape_type, dimensions)
+    # Queue Fusion 360 CAM API task
+    result = queue_task('create_cam_operation', operation_type, parameters)
     
     return {"status": "success", "data": result}
 ```
@@ -187,26 +186,26 @@ uv run install-fusion-plugin --dev
 
 # Restart add-in in Fusion 360
 # Test with HTTP request
-curl -X POST http://localhost:5001/design/shapes/create \
+curl -X POST http://localhost:5001/cam/operations/create \
   -H "Content-Type: application/json" \
-  -d '{"shape_type": "box", "dimensions": {"width": 10, "height": 5, "depth": 3}}'
+  -d '{"operation_type": "pocket", "parameters": {"depth": 5, "stepdown": 1}}'
 ```
 
 ### 3. Write Tests
 
 ```python
-# File: tests/test_geometry.py
+# File: tests/test_operations.py
 import pytest
-from handlers.design.geometry import handle_new_shape
+from handlers.manufacture.operations import handle_new_operation
 
-def test_handle_new_shape():
-    """Test new shape creation."""
+def test_handle_new_operation():
+    """Test new CAM operation creation."""
     request_data = {
-        "shape_type": "box",
-        "dimensions": {"width": 10, "height": 5, "depth": 3}
+        "operation_type": "pocket",
+        "parameters": {"depth": 5, "stepdown": 1}
     }
     
-    result = handle_new_shape(request_data)
+    result = handle_new_operation(request_data)
     
     assert result["status"] == "success"
     assert "data" in result
@@ -221,7 +220,7 @@ def test_handle_new_shape():
 python -m pytest tests/
 
 # Run specific test file
-python -m pytest tests/test_geometry.py
+python -m pytest tests/test_operations.py
 
 # Run with coverage
 python -m pytest --cov=handlers tests/
@@ -261,12 +260,12 @@ python -m pytest --cov=handlers tests/
 3. **Consistent Naming**: Use descriptive names that reflect Fusion 360 terminology
 4. **Error Handling**: Always handle errors gracefully and provide meaningful messages
 
-### Fusion 360 API Usage
+### Fusion 360 CAM API Usage
 
-1. **Thread Safety**: Always use task queue for Fusion 360 API calls
-2. **Object Validation**: Check that API objects exist before using them
+1. **Thread Safety**: Always use task queue for Fusion 360 CAM API calls
+2. **Object Validation**: Check that CAM API objects exist before using them
 3. **Resource Cleanup**: Properly dispose of Fusion 360 objects when done
-4. **Error Recovery**: Handle API errors gracefully and maintain add-in stability
+4. **Error Recovery**: Handle CAM API errors gracefully and maintain add-in stability
 
 ### Documentation
 

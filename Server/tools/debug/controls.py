@@ -33,13 +33,13 @@ def toggle_response_interceptor():
     Example response when enabling:
     {
         "enabled": true,
-        "message": "Response interceptor enabled. HTTP responses will be logged to console."
+        "message": "Response interceptor enabled. HTTP responses for CAM operations will be logged to console."
     }
     
     Example response when disabling:
     {
         "enabled": false,
-        "message": "Response interceptor disabled. HTTP responses will not be logged."
+        "message": "Response interceptor disabled. HTTP responses for CAM operations will not be logged."
     }
     
     Requirements: 4.1, 4.2

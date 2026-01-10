@@ -1,4 +1,4 @@
-# Fusion MCP Integration
+# Fusion MCP Manufacturing Integration
 
 
 https://github.com/user-attachments/assets/46c8140e-377d-4618-a304-03861cb3d7d9
@@ -6,17 +6,17 @@ https://github.com/user-attachments/assets/46c8140e-377d-4618-a304-03861cb3d7d9
 
 ## 🎯 About
 
-Fusion MCP Integration bridges AI assistants with Autodesk Fusion 360 through the Model Context Protocol (MCP). This enables:
+Fusion MCP Manufacturing Integration bridges AI assistants with Autodesk Fusion 360's MANUFACTURE workspace through the Model Context Protocol (MCP). This enables:
 
-- ✨ **Conversational CAD** - Create 3D models using natural language
-- 🤖 **AI-Driven Automation** - Automate repetitive modeling tasks
-- 🔧 **Parametric Control** - Dynamically modify design parameters
-- 🎓 **Accessible CAD** - Lower the barrier for non-CAD users
+- 🏭 **Conversational CAM** - Manage CAM operations using natural language
+- 🤖 **AI-Driven Manufacturing** - Automate CAM setup and toolpath management
+- 🔧 **Toolpath Control** - Dynamically inspect and modify manufacturing parameters
+- 🎓 **Accessible Manufacturing** - Lower the barrier for CAM workflow automation
 
-> **Note:** This is designed as an assistive tool and educational project, not a replacement for professional CAD workflows.
-> Projects like this can assist people with no experience in CAD workflows.
+> **Note:** This is designed as an assistive tool and educational project, not a replacement for professional CAM workflows.
+> Projects like this can assist people with automating manufacturing workflows in Fusion 360.
 
-> **Goal:** Enable conversational CAD and AI-driven automation in Fusion.
+> **Goal:** Enable conversational CAM and AI-driven manufacturing automation in Fusion 360.
 
 ---
 
@@ -341,39 +341,19 @@ uv run pytest FusionMCPBridge/tests/test_live_integration.py::TestEmptyResponseD
 
 ---
 
-### ✏️ Sketching & Creation Tools
+### 🏭 CAM & Manufacturing Tools
 
 | Tool | Description |
 | :--- | :--- |
-| **Draw 2D circle** | Draws a 2D **circle** at a specified position and plane. |
-| **Ellipse** | Generates an **ellipse** (elliptical curve) in the sketching plane. |
-| **Draw lines** | Creates a **polyline** (multiple connected lines) as a sketch. |
-| **Draw one line** | Draws a single line between two 3D points. |
-| **3-Point Arc** | Draws a **circular arc** based on three defined points. |
-| **Spline** | Draws a **Spline curve** through a list of 3D points (used for sweep path). |
-| **Draw box** | Creates a **box** (solid body) with definable dimensions and position. |
-| **Draw cylinder** | Draws a **cylinder** (solid body). |
-| **Draw text**| Draws a text and extrudes it with given values |
-| **Draw Witzenmann logo** | A **fun demo function** for creating the Witzenmann logo. |
-
----
-
-### ⚙️ Feature & Modification Tools
-
-| Tool | Description |
-| :--- | :--- |
-| **Extrude** | **Extrudes** the last active sketch by a given value to create a body. |
-| **Revolve** | Creates a revolved body by **revolving** a profile around an axis. |
-| **Sweep** | Executes a sweep feature using the previously created profile and spline path. |
-| **Loft** | Creates a complex body by **lofting** between a defined number of previously created sketches. |
-| **Thin extrusion** | Creates a **thin-walled extrusion** (extrusion with constant wall thickness). |
-| **Cut extrude** | Removes material from a body by **cutting** a sketch (as a hole/pocket). |
-| **Draw holes** | Creates **Counterbore holes** at specified points on a surface (`faceindex`). |
-| **Fillet edges** | Rounds sharp edges with a defined **radius** (fillet). |
-| **Shell body** | **Hollows** out the body, leaving a uniform wall thickness. |
-| **Circular pattern** | Creates a **circular pattern** (array) of features or bodies around an axis. |
-| **Rectangular pattern**| Creates a **rectangular pattern** of a body|
-
+| **List CAM Setups** | Lists all CAM setups in the current document with details. |
+| **Get Setup Details** | Retrieves detailed information about a specific CAM setup. |
+| **List Toolpaths** | Lists all toolpaths in the current document or specific setup. |
+| **Get Toolpath Details** | Gets detailed information about a specific toolpath. |
+| **List Tools** | Lists all cutting tools used in CAM operations. |
+| **Get Tool Details** | Retrieves detailed information about a specific cutting tool. |
+| **List Tool Libraries** | Lists all available tool libraries in Fusion 360. |
+| **Get Library Tools** | Lists all tools in a specific tool library. |
+| **Find Tool by ID** | Finds a specific tool by its ID in the tool libraries. |
 
 ---
 
@@ -404,7 +384,7 @@ uv run pytest FusionMCPBridge/tests/test_live_integration.py::TestEmptyResponseD
 - **ONLY** MCP server implementation in this project
 - Defines MCP server, tools, and prompts
 - Handles HTTP calls to Fusion add-in
-- Includes CAD operations, CAM functionality, and tool library management
+- Includes CAM functionality and tool library management
 
 ### Fusion Add-In (FusionMCPBridge/)
 - Runs inside Fusion 360
@@ -438,8 +418,8 @@ The Fusion 360 API is **not thread-safe** and requires all operations to run on 
 ### This is NOT
 
 - ❌ A production-ready tool
-- ❌ A replacement for professional CAD software
-- ❌ Suitable for critical engineering work
+- ❌ A replacement for professional CAM software
+- ❌ Suitable for critical manufacturing work
 - ❌ Officially supported by Autodesk
 
 ### This IS
@@ -447,7 +427,7 @@ The Fusion 360 API is **not thread-safe** and requires all operations to run on 
 - ✅ A proof-of-concept
 - ✅ An educational project
 - ✅ A demonstration of MCP capabilities
-- ✅ A tool for rapid prototyping and learning
+- ✅ A tool for rapid prototyping and CAM workflow automation
 
 ---
 

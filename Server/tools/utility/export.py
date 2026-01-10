@@ -25,7 +25,7 @@ def register_tools(mcp_instance: FastMCP):
     mcp.tool()(export_stl)
 
 def export_step(name : str):
-    """Exportiert das Modell als STEP-Datei."""
+    """Export the manufacturing model as a STEP file."""
     try:
         endpoint = get_endpoints("utility")["export_step"]
         data = {
@@ -37,7 +37,7 @@ def export_step(name : str):
         raise
 
 def export_stl(name : str):
-    """Exportiert das Modell als STL-Datei."""
+    """Export the manufacturing model as an STL file."""
     try:
         endpoint = get_endpoints("utility")["export_stl"]
         data = {
