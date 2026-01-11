@@ -705,7 +705,7 @@ def modify_setup_impl(setup_id: str, updates: dict) -> dict:
             "model_id": _extract_model_reference(setup),
             "toolpath_count": operation_count,
             "is_active": hasattr(setup, 'isActive') and setup.isActive,
-            "modified_date": "2025-01-04T00:00:00Z",
+            "modified_date": _get_current_timestamp(),
             "changes_made": changes_made,
             "warnings": warnings if warnings else None,
             "message": f"Setup '{setup.name}' modified successfully" if changes_made else "No changes applied"
@@ -821,7 +821,7 @@ def duplicate_setup_impl(setup_id: str, new_name: str = None) -> dict:
                     "name": source_setup.name,
                     "operation_count": source_operation_count
                 },
-                "created_date": "2025-01-04T00:00:00Z",
+                "created_date": _get_current_timestamp(),
                 "notes": notes,
                 "message": f"Setup '{duplicate_name}' created as duplicate of '{source_setup.name}'"
             }

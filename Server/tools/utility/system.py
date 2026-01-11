@@ -32,7 +32,7 @@ def test_connection():
         endpoint = get_endpoints("utility")["test_connection"]
         return send_request(endpoint, {})
     except Exception as e:
-        logging.error("Test connection failed: %s", e)
+        logging.exception("Test connection failed")
         raise
 
 def delete_all():
@@ -41,7 +41,7 @@ def delete_all():
         endpoint = get_endpoints("utility")["delete_everything"]
         return send_request(endpoint, {})
     except Exception as e:
-        logging.error("Delete failed: %s", e)
+        logging.exception("Delete failed")
         raise
 
 def undo():
@@ -50,7 +50,7 @@ def undo():
         endpoint = get_endpoints("utility")["undo"]
         return send_request(endpoint, {})
     except Exception as e:
-        logging.error("Undo failed: %s", e)
+        logging.exception("Undo failed")
         raise
 
 def move_latest_body(x : float,y:float,z:float):

@@ -47,9 +47,9 @@ def toggle_response_interceptor():
     new_state = interceptor.toggle_interceptor()
     
     if new_state:
-        message = "Response interceptor enabled. HTTP responses will be logged to console."
+        message = "Response interceptor enabled. HTTP responses for CAM operations will be logged to console."
     else:
-        message = "Response interceptor disabled. HTTP responses will not be logged."
+        message = "Response interceptor disabled. HTTP responses for CAM operations will not be logged."
     
     return {
         "enabled": new_state,
