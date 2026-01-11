@@ -27,7 +27,6 @@ import os
 
 # Import CAM tools to test
 import sys
-import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from tools.cam.setups import (
@@ -174,7 +173,9 @@ class CAMBaselineUtils:
     @staticmethod
     def save_baseline_report(report: Dict[str, Any], filepath: str) -> None:
         """Save baseline report to JSON file."""
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        dirpath = os.path.dirname(filepath)
+        if dirpath:  # Only create directories if there's a directory path
+            os.makedirs(dirpath, exist_ok=True)
         
         with open(filepath, 'w') as f:
             json.dump(report, f, indent=2, default=str)

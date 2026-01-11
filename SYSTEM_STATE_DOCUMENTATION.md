@@ -54,7 +54,6 @@
           },
           "is_valid": true
         }
-        // ... 3 more toolpaths
       ]
     }
   ],
@@ -62,6 +61,8 @@
   "message": null
 }
 ```
+
+*Note: 3 additional toolpaths omitted for brevity*
 
 ### System Connectivity Status ✅ OPERATIONAL
 **Test Command:** `curl -s http://localhost:5001/test_connection`

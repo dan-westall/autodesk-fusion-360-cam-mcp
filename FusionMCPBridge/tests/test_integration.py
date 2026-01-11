@@ -672,7 +672,7 @@ class TestEndToEndFlow:
             return {"status": 200, "data": {"message": "Box queued"}}
         
         # Design handlers removed as part of CAD removal
-        self.router.register_handler("/Box", box_http_handler, ["POST"], "manufacture", "geometry")
+        self.router.register_handler("/Box", http_handler, ["POST"], "manufacture", "geometry")
         
         # Simulate HTTP request
         response = self.router.route_request("/Box", "POST", {

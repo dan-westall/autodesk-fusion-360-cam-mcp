@@ -34,7 +34,6 @@ docs/
 │
 └── README.md               # This navigation guide
 ```
-```
 
 ## Quick Navigation
 

@@ -86,7 +86,7 @@ Based on the research, the recommended implementation approach is:
 1. Validate the setup exists
 2. Validate position and orientation parameters
 3. Attempt to modify setup parameters for position
-4. Analyze impact on existing operations
+4. Analyse impact on existing operations
 5. Return result with warnings if operations affected
 
 ### 6. Relationship to WCS
@@ -122,7 +122,7 @@ When part position changes:
 
 1. **Origin Validation**:
    - All coordinates must be valid numbers
-   - Values should be in centimeters (Fusion 360 internal units)
+   - Values should be in centimetres (Fusion 360 internal units)
 
 2. **Orientation Validation**:
    - Axis vectors must be unit vectors (or normalizable)
@@ -133,9 +133,9 @@ When part position changes:
 
 ### Unit Conversion
 
-Fusion 360 uses centimeters internally:
+Fusion 360 uses centimetres internally:
 - 1 unit = 1 cm = 10 mm
-- All position values must be in centimeters
+- All position values must be in centimetres
 
 ### Error Handling
 

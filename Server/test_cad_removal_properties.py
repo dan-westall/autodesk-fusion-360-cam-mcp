@@ -529,11 +529,6 @@ class TestSuiteCleanupCompleteness:
         )
 
 
-if __name__ == "__main__":
-    # Run the property-based tests
-    pytest.main([__file__, "-v", "--tb=short"])
-
-
 class TestDirectoryStructureCleanup:
     """Property-based tests for directory structure cleanup."""
     

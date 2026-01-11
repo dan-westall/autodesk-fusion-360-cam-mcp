@@ -151,15 +151,15 @@ def register_prompts_with_mcp(mcp):
             prompt_info = registry.get_prompt_info(prompt_name)
             if prompt_info:
                 # Create dynamic prompt function
-                def create_prompt_function(name):
+                def create_prompt_function(name, info):
                     def prompt_function():
                         return registry.get_prompt(name)
                     prompt_function.__name__ = name
-                    prompt_function.__doc__ = prompt_info.description
+                    prompt_function.__doc__ = info.description
                     return prompt_function
                 
                 # Register with MCP
-                prompt_func = create_prompt_function(prompt_name)
+                prompt_func = create_prompt_function(prompt_name, prompt_info)
                 mcp.prompt()(prompt_func)
                 logger.debug(f"Registered MCP prompt: {prompt_name}")
                 

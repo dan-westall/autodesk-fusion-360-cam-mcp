@@ -775,8 +775,9 @@ def duplicate_setup_impl(setup_id: str, new_name: str = None) -> dict:
         else:
             duplicate_name = _generate_duplicate_name(cam_product, source_setup.name)
         
-        source_wcs = _extract_wcs_info(source_setup)
-        source_stock = _extract_stock_info(source_setup)
+        # TODO: WCS and stock configuration will be applied in future implementation
+        _source_wcs = _extract_wcs_info(source_setup)
+        _source_stock = _extract_stock_info(source_setup)
         source_model_ref = _extract_model_reference(source_setup)
         source_operation_count = _get_operation_count(source_setup)
         
