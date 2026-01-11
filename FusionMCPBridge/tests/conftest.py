@@ -56,7 +56,6 @@ __all__ = [
 
 class WorkspaceCategory(Enum):
     """Fusion 360 workspace categories for test organization."""
-    DESIGN = "design"
     MANUFACTURE = "manufacture"
     SYSTEM = "system"
 
@@ -68,7 +67,6 @@ class EndpointDefinition:
     method: str = "GET"
     category: WorkspaceCategory = WorkspaceCategory.SYSTEM
     requires_cam: bool = False
-    requires_design: bool = False
     description: str = ""
     expected_fields: tuple = ()
     
@@ -249,97 +247,7 @@ ENDPOINTS = {
         expected_fields=("tools",)
     ),
     
-    # =========================================================================
-    # Design workspace - Geometry
-    # =========================================================================
-    "draw_box": EndpointDefinition(
-        path="/draw-box",
-        method="POST",
-        category=WorkspaceCategory.DESIGN,
-        requires_design=True,
-        description="Draw a box",
-        expected_fields=()
-    ),
-    "draw_cylinder": EndpointDefinition(
-        path="/draw-cylinder",
-        method="POST",
-        category=WorkspaceCategory.DESIGN,
-        requires_design=True,
-        description="Draw a cylinder",
-        expected_fields=()
-    ),
-    "draw_circle": EndpointDefinition(
-        path="/draw-circle",
-        method="POST",
-        category=WorkspaceCategory.DESIGN,
-        requires_design=True,
-        description="Draw a circle",
-        expected_fields=()
-    ),
-    "draw_lines": EndpointDefinition(
-        path="/draw-lines",
-        method="POST",
-        category=WorkspaceCategory.DESIGN,
-        requires_design=True,
-        description="Draw lines",
-        expected_fields=()
-    ),
-    
-    # =========================================================================
-    # Design workspace - Features
-    # =========================================================================
-    "extrude": EndpointDefinition(
-        path="/extrude",
-        method="POST",
-        category=WorkspaceCategory.DESIGN,
-        requires_design=True,
-        description="Extrude a profile",
-        expected_fields=()
-    ),
-    "revolve": EndpointDefinition(
-        path="/revolve",
-        method="POST",
-        category=WorkspaceCategory.DESIGN,
-        requires_design=True,
-        description="Revolve a profile",
-        expected_fields=()
-    ),
-    "fillet": EndpointDefinition(
-        path="/fillet",
-        method="POST",
-        category=WorkspaceCategory.DESIGN,
-        requires_design=True,
-        description="Add fillet to edges",
-        expected_fields=()
-    ),
-    "shell": EndpointDefinition(
-        path="/shell",
-        method="POST",
-        category=WorkspaceCategory.DESIGN,
-        requires_design=True,
-        description="Shell a body",
-        expected_fields=()
-    ),
-    
-    # =========================================================================
-    # Design workspace - Export
-    # =========================================================================
-    "export_step": EndpointDefinition(
-        path="/export-step",
-        method="POST",
-        category=WorkspaceCategory.DESIGN,
-        requires_design=True,
-        description="Export as STEP file",
-        expected_fields=()
-    ),
-    "export_stl": EndpointDefinition(
-        path="/export-stl",
-        method="POST",
-        category=WorkspaceCategory.DESIGN,
-        requires_design=True,
-        description="Export as STL file",
-        expected_fields=()
-    ),
+
 }
 
 
@@ -392,32 +300,6 @@ def manufacture_workspace_required(bridge_available):
     return True
 
 
-@pytest.fixture
-def design_document_required(bridge_available):
-    """
-    Fixture that marks tests requiring an open design document.
-    
-    Tests using this fixture will be skipped if no design is open.
-    Uses /list_parameters endpoint which fails when no design is active.
-    """
-    try:
-        # Use a design-specific endpoint that fails when no design is open
-        response = make_request("/list_parameters")
-        if response.status_code != 200:
-            # Check if the error indicates no design is open
-            try:
-                data = response.json()
-                error_msg = str(data).lower()
-                if "no design" in error_msg or "no active" in error_msg or "design" in error_msg:
-                    pytest.skip("No design document open")
-            except Exception:
-                pass
-            pytest.skip("No design document open or endpoint unavailable")
-    except requests.exceptions.RequestException:
-        pytest.skip("Could not verify design document availability")
-    
-    return True
-
 
 # ============================================================================
 # Pytest Configuration
@@ -452,9 +334,6 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers", "manufacture: marks tests requiring MANUFACTURE workspace"
-    )
-    config.addinivalue_line(
-        "markers", "design: marks tests requiring Design workspace"
     )
 
 

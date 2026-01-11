@@ -27,37 +27,38 @@ def register_tools(mcp_instance: FastMCP):
     mcp_instance.tool()(get_prompt_content)
 
 def test_connection():
-    """Testes die Verbindung zum Fusion 360 Server."""
+    """Test connection to Fusion 360 server."""
     try:
         endpoint = get_endpoints("utility")["test_connection"]
-        return send_request(endpoint, {}, {})
+        return send_request(endpoint, {})
     except Exception as e:
-        logging.error("Test connection failed: %s", e)
+        logging.exception("Test connection failed")
         raise
 
 def delete_all():
-    """Löscht alle Objekte in der aktuellen Fusion 360-Sitzung."""
+    """Delete all objects in the current Fusion 360 session."""
     try:
         endpoint = get_endpoints("utility")["delete_everything"]
-        headers = get_headers()
-        send_request(endpoint, {}, headers)
+        return send_request(endpoint, {})
     except Exception as e:
-        logging.error("Delete failed: %s", e)
+        logging.exception("Delete failed")
         raise
 
 def undo():
-    """Macht die letzte Aktion rückgängig."""
+    """Undo the last operation."""
     try:
         endpoint = get_endpoints("utility")["undo"]
-        return send_request(endpoint, {}, {})
+        return send_request(endpoint, {})
     except Exception as e:
-        logging.error("Undo failed: %s", e)
+        logging.exception("Undo failed")
         raise
 
 def move_latest_body(x : float,y:float,z:float):
     """
-    Du kannst den letzten Körper in Fusion 360 verschieben in x,y und z Richtung
+    Move the latest body in Fusion 360 in x, y, and z directions.
     
+    This tool is useful for positioning manufactured parts or adjusting
+    CAM setup geometry after creation.
     """
     endpoint = get_endpoints("utility")["move_body"]
     payload = {
@@ -65,8 +66,7 @@ def move_latest_body(x : float,y:float,z:float):
         "y": y,
         "z": z
     }
-    headers = get_headers()
-    return send_request(endpoint, payload, headers)
+    return send_request(endpoint, payload)
 
 def list_available_prompts():
     """

@@ -10,6 +10,12 @@ the patterns from operations/ and tool_libraries/ modules.
 Requirements: 1.x, 4.x, 5.x, 6.x, 7.x, 8.x, 9.x, 10.x, 11.x, 13.x
 """
 
+from datetime import datetime, timezone
+
+def _get_current_timestamp() -> str:
+    """Get current UTC timestamp in ISO format."""
+    return datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+
 import adsk.core
 import adsk.cam
 from typing import Dict, Any, Optional
@@ -307,8 +313,8 @@ def list_setups_detailed() -> dict:
                 "model_id": model_ref,
                 "toolpath_count": toolpath_count,
                 "is_active": hasattr(setup, 'isActive') and setup.isActive,
-                "created_date": "2025-01-03T00:00:00Z",
-                "modified_date": "2025-01-03T00:00:00Z"
+                "created_date": _get_current_timestamp(),
+                "modified_date": _get_current_timestamp()
             }
             
             result["setups"].append(setup_data)
@@ -401,8 +407,8 @@ def get_setup_by_id_impl(setup_id: str) -> dict:
             "toolpath_count": len(toolpaths),
             "is_active": hasattr(setup, 'isActive') and setup.isActive,
             "metadata": {
-                "created_date": "2025-01-03T00:00:00Z",
-                "modified_date": "2025-01-03T00:00:00Z"
+                "created_date": _get_current_timestamp(),
+                "modified_date": _get_current_timestamp()
             }
         }
         
@@ -460,7 +466,7 @@ def create_setup_impl(name: str = None, model_id: str = None) -> dict:
                 "wcs": actual_wcs_config,
                 "stock": actual_stock_config,
                 "model_id": model_id,
-                "created_date": "2025-01-03T00:00:00Z",
+                "created_date": _get_current_timestamp(),
                 "message": f"Setup '{name}' created successfully"
             }
             
@@ -699,7 +705,7 @@ def modify_setup_impl(setup_id: str, updates: dict) -> dict:
             "model_id": _extract_model_reference(setup),
             "toolpath_count": operation_count,
             "is_active": hasattr(setup, 'isActive') and setup.isActive,
-            "modified_date": "2025-01-04T00:00:00Z",
+            "modified_date": _get_current_timestamp(),
             "changes_made": changes_made,
             "warnings": warnings if warnings else None,
             "message": f"Setup '{setup.name}' modified successfully" if changes_made else "No changes applied"
@@ -775,8 +781,9 @@ def duplicate_setup_impl(setup_id: str, new_name: str = None) -> dict:
         else:
             duplicate_name = _generate_duplicate_name(cam_product, source_setup.name)
         
-        source_wcs = _extract_wcs_info(source_setup)
-        source_stock = _extract_stock_info(source_setup)
+        # TODO: WCS and stock configuration will be applied in future implementation
+        _source_wcs = _extract_wcs_info(source_setup)
+        _source_stock = _extract_stock_info(source_setup)
         source_model_ref = _extract_model_reference(source_setup)
         source_operation_count = _get_operation_count(source_setup)
         
@@ -814,7 +821,7 @@ def duplicate_setup_impl(setup_id: str, new_name: str = None) -> dict:
                     "name": source_setup.name,
                     "operation_count": source_operation_count
                 },
-                "created_date": "2025-01-04T00:00:00Z",
+                "created_date": _get_current_timestamp(),
                 "notes": notes,
                 "message": f"Setup '{duplicate_name}' created as duplicate of '{source_setup.name}'"
             }

@@ -4,6 +4,10 @@
 #
 # This module follows the same patterns as existing `operations/` and `tool_libraries/` modules.
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 __version__ = "1.0.0"
 
 # Import all setup handlers to ensure they register with the router
@@ -14,14 +18,12 @@ from . import stock
 try:
     from . import wcs
 except ImportError as e:
-    import logging
-    logging.getLogger(__name__).warning(f"Could not import wcs module: {e}")
+    logger.warning(f"Could not import wcs module: {e}")
 
 try:
     from . import part_position
 except ImportError as e:
-    import logging
-    logging.getLogger(__name__).warning(f"Could not import part_position module: {e}")
+    logger.warning(f"Could not import part_position module: {e}")
 
 # =============================================================================
 # Re-export from setup core module
@@ -96,12 +98,11 @@ try:
 except ImportError:
     pass  # Already warned above
 
+# Build __all__ conditionally based on successful imports
 __all__ = [
-    # Submodules
+    # Submodules that always exist
     'setup',
     'stock',
-    'wcs',
-    'part_position',
     # Setup core functions
     'list_setups_detailed',
     'get_setup_by_id_impl',
@@ -137,15 +138,31 @@ __all__ = [
     'configure_box_stock',
     'configure_cylinder_stock',
     'apply_stock_material',
-    # WCS functions
-    'configure_wcs',
-    'validate_wcs_configuration',
-    'integrate_model_id_with_wcs',
-    'validate_orientation_vectors',
-    # Part position functions
-    'get_part_position_impl',
-    'set_part_position_impl',
-    'validate_part_position',
-    'handle_get_part_position',
-    'handle_set_part_position',
 ]
+
+# Add WCS exports if module imported successfully
+try:
+    from .wcs import configure_wcs
+    __all__.extend([
+        'wcs',
+        'configure_wcs',
+        'validate_wcs_configuration',
+        'integrate_model_id_with_wcs',
+        'validate_orientation_vectors',
+    ])
+except ImportError:
+    pass
+
+# Add part_position exports if module imported successfully  
+try:
+    from .part_position import get_part_position_impl
+    __all__.extend([
+        'part_position',
+        'get_part_position_impl',
+        'set_part_position_impl',
+        'validate_part_position',
+        'handle_get_part_position',
+        'handle_set_part_position',
+    ])
+except ImportError:
+    pass

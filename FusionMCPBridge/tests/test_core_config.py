@@ -26,7 +26,6 @@ class TestWorkspaceCategory:
     
     def test_workspace_categories_exist(self):
         """Test that all expected workspace categories exist."""
-        assert WorkspaceCategory.DESIGN.value == "design"
         assert WorkspaceCategory.MANUFACTURE.value == "manufacture"
         assert WorkspaceCategory.RESEARCH.value == "research"
         assert WorkspaceCategory.SYSTEM.value == "system"
@@ -34,7 +33,7 @@ class TestWorkspaceCategory:
     def test_workspace_category_count(self):
         """Test that we have the expected number of categories."""
         categories = list(WorkspaceCategory)
-        assert len(categories) == 4
+        assert len(categories) == 3
 
 
 class TestConfigurationManager:
@@ -106,15 +105,6 @@ class TestConfigurationManager:
         assert isinstance(endpoints, dict)
         assert len(endpoints) > 0
     
-    def test_get_endpoints_by_category_design(self):
-        """Test get_endpoints returns Design workspace endpoints."""
-        endpoints = self.config.get_endpoints("design")
-        
-        assert isinstance(endpoints, dict)
-        assert "geometry" in endpoints
-        assert "sketching" in endpoints
-        assert "modeling" in endpoints
-    
     def test_get_endpoints_by_category_manufacture(self):
         """Test get_endpoints returns MANUFACTURE workspace endpoints."""
         endpoints = self.config.get_endpoints("manufacture")
@@ -169,10 +159,10 @@ class TestConfigurationManager:
     
     def test_update_endpoint(self):
         """Test updating an endpoint."""
-        self.config.update_endpoint("design", "geometry", "test_endpoint", "/test/path")
+        self.config.update_endpoint("manufacture", "setups", "test_endpoint", "/test/path")
         
-        endpoints = self.config.get_endpoints("design")
-        assert endpoints["geometry"]["test_endpoint"] == "/test/path"
+        endpoints = self.config.get_endpoints("manufacture")
+        assert endpoints["setups"]["test_endpoint"] == "/test/path"
     
     def test_update_endpoint_invalid_category(self):
         """Test updating endpoint with invalid category raises error."""
@@ -183,8 +173,8 @@ class TestConfigurationManager:
         """Test adding category-specific configuration."""
         test_config = {"setting": "value"}
         
-        self.config.add_category_configuration("design", test_config)
-        result = self.config.get_category_configuration("design")
+        self.config.add_category_configuration("manufacture", test_config)
+        result = self.config.get_category_configuration("manufacture")
         
         assert result == test_config
     

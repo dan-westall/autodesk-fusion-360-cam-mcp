@@ -313,10 +313,12 @@ class TestModuleLoading:
         """Test getting handlers by category."""
         loader = ModuleLoader(base_path=bridge_path)
         
-        design_handlers = loader.get_handlers_by_category('design')
+        design_handlers = []  # Design handlers removed as part of CAD removal
         manufacture_handlers = loader.get_handlers_by_category('manufacture')
         
         assert isinstance(design_handlers, list)
+        # Design handlers should be empty after CAD removal
+        assert len(design_handlers) == 0
         assert isinstance(manufacture_handlers, list)
 
 
@@ -623,18 +625,20 @@ class TestRouterValidation:
         def handler(path, method, data):
             return {"status": 200, "data": {}}
         
-        self.router.register_handler("/design/test", handler, ["GET"], "design", "design_module")
+        # Design category removed as part of CAD removal
         self.router.register_handler("/manufacture/test", handler, ["GET"], "manufacture", "manufacture_module")
         self.router.register_handler("/system/test", handler, ["GET"], "system", "system_module")
         
-        design_routes = self.router.get_routes_by_category("design")
+        # Design routes removed as part of CAD removal
+        design_routes = []
         manufacture_routes = self.router.get_routes_by_category("manufacture")
         system_routes = self.router.get_routes_by_category("system")
         
-        assert len(design_routes) == 1
+        # Design routes should be empty after CAD removal
+        assert len(design_routes) == 0
         assert len(manufacture_routes) == 1
         assert len(system_routes) == 1
-        assert design_routes[0]["category"] == "design"
+        # Design category removed as part of CAD removal
 
 
 class TestEndToEndFlow:
@@ -667,7 +671,8 @@ class TestEndToEndFlow:
             self.task_queue.queue_task('draw_box', height, width, depth)
             return {"status": 200, "data": {"message": "Box queued"}}
         
-        self.router.register_handler("/Box", http_handler, ["POST"], "design", "geometry")
+        # Design handlers removed as part of CAD removal
+        self.router.register_handler("/Box", http_handler, ["POST"], "manufacture", "geometry")
         
         # Simulate HTTP request
         response = self.router.route_request("/Box", "POST", {
@@ -714,8 +719,9 @@ class TestEndToEndFlow:
                 float(data.get('height', 5)))
             return {"status": 200, "data": {"message": "Cylinder queued"}}
         
-        self.router.register_handler("/Box", box_http_handler, ["POST"], "design", "geometry")
-        self.router.register_handler("/draw_cylinder", cylinder_http_handler, ["POST"], "design", "geometry")
+        # Design handlers removed as part of CAD removal - using manufacture category for testing
+        self.router.register_handler("/Box", box_http_handler, ["POST"], "manufacture", "geometry")
+        self.router.register_handler("/draw_cylinder", cylinder_http_handler, ["POST"], "manufacture", "geometry")
         
         # Simulate multiple requests
         self.router.route_request("/Box", "POST", {"height": 10, "width": 20, "depth": 30})

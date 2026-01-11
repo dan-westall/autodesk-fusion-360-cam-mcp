@@ -1,89 +1,71 @@
-# Fusion MCP Integration
+# Fusion MCP Manufacturing Integration
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
-https://github.com/user-attachments/assets/46c8140e-377d-4618-a304-03861cb3d7d9
+Bridge AI assistants with Autodesk Fusion 360's MANUFACTURE workspace through conversational CAM commands.
 
+## What Problem Does This Solve?
 
-## 🎯 About
+Learning CAM can be overwhelming with complex workflows, tool selection decisions, and feeds/speeds calculations. This project was created to provide:
 
-Fusion MCP Integration bridges AI assistants with Autodesk Fusion 360 through the Model Context Protocol (MCP). This enables:
+- **CAM Learning Assistant**: AI mentor to guide through manufacturing workflows and best practices
+- **Feeds & Speeds Helper**: Intelligent assistance with cutting parameters and optimization
+- **Tool Selection Guidance**: Smart recommendations for cutting tools based on materials and operations
+- **Conversational CAM**: Learn and manage CAM operations through natural language interaction
 
-- ✨ **Conversational CAD** - Create 3D models using natural language
-- 🤖 **AI-Driven Automation** - Automate repetitive modeling tasks
-- 🔧 **Parametric Control** - Dynamically modify design parameters
-- 🎓 **Accessible CAD** - Lower the barrier for non-CAD users
+## Tech Stack
 
-> **Note:** This is designed as an assistive tool and educational project, not a replacement for professional CAD workflows.
-> Projects like this can assist people with no experience in CAD workflows.
-
-> **Goal:** Enable conversational CAD and AI-driven automation in Fusion.
-
----
-
-
-# Setup
-
-**I highly recommend to do everything inside Visual Studio Code or another IDE**
-
----
+- **Python 3.10+** - Core runtime and MCP server
+- **FastMCP** - Model Context Protocol server implementation
+- **Uvicorn** - ASGI server for HTTP transport
+- **Fusion 360 CAM API** - Manufacturing operations and tool library access
 
 ## Requirements
-| Requirement | Link |
-|------------|------|
-| Python 3.10+ | https://python.org |
-| uv (Python package manager) | https://docs.astral.sh/uv/getting-started/installation/ |
-| Autodesk Fusion 360 | https://autodesk.com/fusion360 |
-| Claude Desktop or Kiro CLI | https://claude.ai/download |
-| VS Code (optional) | https://code.visualstudio.com |
 
----
+| Component | Version | Installation |
+|-----------|---------|--------------|
+| Python | 3.10+ | [python.org](https://python.org) |
+| uv | Latest | [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+| Autodesk Fusion 360 | Current | [autodesk.com/fusion360](https://autodesk.com/fusion360) |
+| AI Assistant | - | See setup sections below |
 
-## Clone Repository
+## Installation
+
+### 1. Clone Repository
+
 ```bash
 git clone https://github.com/JustusBraitinger/FusionMCP
 cd FusionMCP
 ```
 
-> **Important:** Do **NOT** start the Add-In yet.
-
----
-
-## Install Dependencies
-
-Use `uv sync` to install all dependencies and set up the virtual environment automatically:
+### 2. Install Dependencies
 
 ```bash
 uv sync
 ```
 
-This will:
-- Create a virtual environment if one doesn't exist
-- Install all required dependencies (fastmcp, uvicorn, requests)
-- Lock versions in `uv.lock` for reproducible builds
+This creates a virtual environment and installs all required dependencies with locked versions.
 
----
+### 3. Install Fusion 360 Add-In
 
-## Installing the MCP Add-In for Fusion 360
-
-### For Development (Recommended)
-Creates a symbolic link for live editing without reinstalling:
+**For Development (Recommended):**
 ```bash
 uv run install-fusion-plugin --dev
 ```
 
-### For Distribution
-Copies files to the add-in directory:
+**For Distribution:**
 ```bash
 uv run install-fusion-plugin
 ```
 
-> **Development Tip:** Use the `--dev` flag during development. Any code changes will be immediately available in Fusion after restarting the add-in.
+The `--dev` flag creates a symbolic link for live editing without reinstalling after code changes.
 
----
+## Setup for AI Assistants
 
-## Connect to Kiro CLI
+### Kiro CLI Setup
 
-For Kiro CLI, create or edit your agent configuration file:
+Create or edit your Kiro agent configuration file:
 
 ```json
 {
@@ -105,14 +87,13 @@ For Kiro CLI, create or edit your agent configuration file:
 }
 ```
 
----
+Replace `/Users/yourname/path/to/FusionMCP` with your actual project path.
 
-## Connect to Claude Desktop
+### Claude Desktop Setup
 
-In Claude Desktop go to:
-**Settings → Developer → Edit Config**
-
-Add this block (change the path for your system):
+1. Open Claude Desktop
+2. Go to **Settings → Developer → Edit Config**
+3. Add the MCP server configuration:
 
 **macOS:**
 ```json
@@ -153,40 +134,25 @@ Add this block (change the path for your system):
   }
 }
 ```
-> **Note:** Windows paths require double backslashes `\\`
 
-Claude will automatically start and stop the MCP server when needed.
-
-### Alternative: Using fastmcp install
-
-You can also use the fastmcp CLI to auto-configure Claude:
-
+**Alternative using fastmcp:**
 ```bash
 uv run fastmcp install Server/MCP_Server.py --name Fusion
 ```
 
-### Using the MCP in Claude
-1. Restart Claude if needed (force close if not visible)
-2. Click **➕ Add** (bottom left of chat)
-3. Select **Add from Fusion**
-4. Choose a Fusion MCP prompt
+### VS Code Copilot Setup
 
----
-
-## Use MCP in VS Code (Copilot)
-
-VS Code uses HTTP transport, so you need to start the server manually with the `--sse` flag:
+VS Code requires HTTP transport. Start the server manually:
 
 ```bash
 uv run start-mcp-server --sse
 ```
 
-Then create or edit the file:
+Create or edit the MCP configuration file:
 
-**Windows:** `%APPDATA%\Code\User\globalStorage\github.copilot-chat\mcp.json`
+**Windows:** `%APPDATA%\Code\User\globalStorage\github.copilot-chat\mcp.json`  
 **macOS:** `~/Library/Application Support/Code/User/globalStorage/github.copilot-chat/mcp.json`
 
-Paste:
 ```json
 {
   "servers": {
@@ -199,267 +165,174 @@ Paste:
 }
 ```
 
-### Alternative Setup in VS Code
-1. Press **CTRL + SHIFT + P** (or **CMD + SHIFT + P** on macOS)
-2. Search **MCP** → choose **Add MCP**
-3. Select **HTTP**
+**Alternative VS Code Setup:**
+1. Press **Ctrl+Shift+P** (or **Cmd+Shift+P** on macOS)
+2. Search "MCP" → select "Add MCP"
+3. Choose "HTTP"
 4. Enter: `http://127.0.0.1:8000/sse`
-5. Name your MCP **`FusionMCP`**
+5. Name: `FusionMCP`
 
----
+## Usage
 
-## Try It Out 😄
+### Basic Workflow
 
-1. Activate the Fusion Add-In inside Fusion 360
-2. Start the MCP server (if using VS Code or manual testing):
-   ```bash
-   cd Server && python3 MCP_Server.py --server_type sse
-   ```
+1. **Start Fusion 360** and open a CAM-enabled document
+2. **Activate the add-in** in Fusion 360's Scripts & Add-ins dialog
+3. **Start your AI assistant** (Claude Desktop, Kiro CLI, or VS Code)
+4. **Begin conversational CAM**:
 
-### In VS Code
-Type `/mcp.FusionMCP` to see a list of predetermined prompts.
-
-### In Claude
-Just open Claude and ask for the FusionMCP tools.
-
----
-
-## 🐛 Development & Debugging
-
-### Remote Add-in Control (Development)
-
-For development workflow, you can install a debugger add-in that allows remote control of the main FusionMCPBridge add-in:
-
-```bash
-# Manually copy the debugger add-in folder to Fusion's add-ins directory
-# macOS: ~/Library/Application Support/Autodesk/Autodesk Fusion 360/API/AddIns/
-# Windows: %APPDATA%\Autodesk\Autodesk Fusion 360\API\AddIns\
-
-cp -r FusionMCPBridgeDebugger ~/Library/Application\ Support/Autodesk/Autodesk\ Fusion\ 360/API/AddIns/
+```
+"What's the best tool for machining aluminum?"
+"Help me set feeds and speeds for this 6mm end mill"
+"List all CAM setups in the current document"
+"What stepdown should I use for roughing steel?"
 ```
 
-**Available endpoints:**
-```bash
-# Restart the main add-in (most common for development)
-curl http://localhost:5002/addon/restart
+### Available Commands
 
-# Stop the main add-in
-curl http://localhost:5002/addon/stop
+#### CAM Learning & Guidance
+- Interactive CAM workflow mentoring
+- Feeds and speeds recommendations
+- Tool selection assistance for different materials
+- Manufacturing best practices guidance
 
-# Start the main add-in
-curl http://localhost:5002/addon/start
+#### CAM Operations
+- List CAM setups, toolpaths, and operations
+- Get detailed setup and toolpath information
+- Manage cutting tools and tool libraries
+- Modify manufacturing parameters
 
-# Check add-in status
-curl http://localhost:5002/addon/status
-```
+#### System Utilities
+- Test connection to Fusion 360
+- Undo operations
+- Basic parameter management
 
-**Usage:** After making code changes, run `curl http://localhost:5002/addon/restart` to restart the main add-in without manually using the Scripts & Add-ins dialog. Check Fusion 360's Text Commands window for restart confirmation messages.
+## Build/Development Setup
 
 ### Development Workflow
 
-1. **Make code changes** to files in `FusionMCPBridge/`
-2. **Restart the add-in** remotely:
-   ```bash
-   curl http://localhost:5002/addon/restart
-   ```
-3. **Test your changes** with MCP endpoints:
-   ```bash
-   # Test basic connectivity
-   curl http://localhost:5001/test-connection
-   
-   # Test tool libraries
-   curl http://localhost:5001/tool-libraries
-   
-   # Test specific library tools
-   curl http://localhost:5001/tool-libraries/library_0/tools
-   ```
-4. **Check logs** in Fusion 360's Text Commands window for debug output
-5. **Repeat** as needed during development
-
-### When to Restart
-
-**Always restart after:**
-- Method signature changes
-- New module imports
-- Class definition changes
-- Adding new endpoints
-
-**No restart needed for:**
-- Simple code changes within existing methods
-- Parameter value changes
-- Logic updates in existing functions
-
----
-
-## 🧪 Testing
-
-### Unit Tests (No Fusion Required)
-Run unit tests that don't require Fusion 360:
-
+1. **Install debugger add-in** for remote control:
 ```bash
-# Server tests
-uv run pytest Server/tests/ -v
+# macOS
+cp -r FusionMCPBridgeDebugger ~/Library/Application\ Support/Autodesk/Autodesk\ Fusion\ 360/API/AddIns/
 
-# Bridge tests (excluding live tests)
+# Windows
+copy FusionMCPBridgeDebugger "%APPDATA%\Autodesk\Autodesk Fusion 360\API\AddIns\"
+```
+
+2. **Make code changes** in `FusionMCPBridge/`
+
+3. **Restart add-in remotely**:
+```bash
+curl http://localhost:5002/addon/restart
+```
+
+4. **Test changes** with your AI assistant
+
+### Testing
+
+**Unit Tests (No Fusion Required):**
+```bash
+uv run pytest Server/tests/ -v
 uv run pytest FusionMCPBridge/tests/ -v -m "not live"
 ```
 
-### Live Integration Tests (Fusion Required)
-These tests make real HTTP requests to the running add-in and catch issues that unit tests can't detect (like the task_queue callback pattern bug).
-
-**Prerequisites:**
-1. Fusion 360 running
-2. FusionMCPBridge add-in active
-3. A CAM document open (for CAM-specific tests)
-
+**Live Integration Tests (Fusion Required):**
 ```bash
-# Run all live tests
+# Prerequisites: Fusion 360 running with FusionMCPBridge active
 uv run pytest FusionMCPBridge/tests/test_live_integration.py -v
-
-# Run only smoke tests (quick validation)
-uv run pytest FusionMCPBridge/tests/test_live_integration.py::TestSmokeTests -v
-
-# Run empty response detection tests (catches task_queue bugs)
-uv run pytest FusionMCPBridge/tests/test_live_integration.py::TestEmptyResponseDetection -v
 ```
 
-**What Live Tests Catch:**
-- Empty `{}` responses from broken task_queue patterns
-- HTTP endpoint routing issues
-- Response structure validation
-- Real API behavior vs mocked behavior
+### Development Endpoints
 
-**Development Workflow with Live Tests:**
-1. Make code changes
-2. Restart add-in: `curl http://localhost:5002/addon/restart`
-3. Run smoke tests: `uv run pytest FusionMCPBridge/tests/test_live_integration.py::TestSmokeTests -v`
-4. If smoke tests pass, run full live test suite
+```bash
+# Restart add-in (most common)
+curl http://localhost:5002/addon/restart
 
----
+# Check add-in status
+curl http://localhost:5002/addon/status
 
-## 🛠️ Available Tools
-
----
-
-### ✏️ Sketching & Creation Tools
-
-| Tool | Description |
-| :--- | :--- |
-| **Draw 2D circle** | Draws a 2D **circle** at a specified position and plane. |
-| **Ellipse** | Generates an **ellipse** (elliptical curve) in the sketching plane. |
-| **Draw lines** | Creates a **polyline** (multiple connected lines) as a sketch. |
-| **Draw one line** | Draws a single line between two 3D points. |
-| **3-Point Arc** | Draws a **circular arc** based on three defined points. |
-| **Spline** | Draws a **Spline curve** through a list of 3D points (used for sweep path). |
-| **Draw box** | Creates a **box** (solid body) with definable dimensions and position. |
-| **Draw cylinder** | Draws a **cylinder** (solid body). |
-| **Draw text**| Draws a text and extrudes it with given values |
-| **Draw Witzenmann logo** | A **fun demo function** for creating the Witzenmann logo. |
-
----
-
-### ⚙️ Feature & Modification Tools
-
-| Tool | Description |
-| :--- | :--- |
-| **Extrude** | **Extrudes** the last active sketch by a given value to create a body. |
-| **Revolve** | Creates a revolved body by **revolving** a profile around an axis. |
-| **Sweep** | Executes a sweep feature using the previously created profile and spline path. |
-| **Loft** | Creates a complex body by **lofting** between a defined number of previously created sketches. |
-| **Thin extrusion** | Creates a **thin-walled extrusion** (extrusion with constant wall thickness). |
-| **Cut extrude** | Removes material from a body by **cutting** a sketch (as a hole/pocket). |
-| **Draw holes** | Creates **Counterbore holes** at specified points on a surface (`faceindex`). |
-| **Fillet edges** | Rounds sharp edges with a defined **radius** (fillet). |
-| **Shell body** | **Hollows** out the body, leaving a uniform wall thickness. |
-| **Circular pattern** | Creates a **circular pattern** (array) of features or bodies around an axis. |
-| **Rectangular pattern**| Creates a **rectangular pattern** of a body|
-
-
----
-
-### 📏 Analysis & Control
-
-| Tool | Description |
-| :--- | :--- |
-| **Count** | Counts the total number of all **model parameters**. |
-| **List parameters** | Lists all defined **model parameters** in detail. |
-| **Change parameter** | Changes the value of an existing named parameter in the model. |
-| **Test connection** | Tests the communication link to the Fusion 360 server. |
-| **Undo** | **Undoes** the last operation in Fusion 360. |
-| **Delete all** | **Deletes all objects** in the current Fusion 360 session (`destroy`). |
-
----
-
-### 💾 Export
-
-| Tool | Description |
-| :--- | :--- |
-| **Export STEP** | **Exports** the model as a **STEP** file. |
-| **Export STL** | **Exports** the model as an **STL** file. |
-
+# Test basic connectivity
+curl http://localhost:5001/test-connection
+```
 
 ## Architecture
 
-### Server Module (Server/MCP_Server.py)
-- **ONLY** MCP server implementation in this project
-- Defines MCP server, tools, and prompts
-- Handles HTTP calls to Fusion add-in
-- Includes CAD operations, CAM functionality, and tool library management
+```mermaid
+graph TD
+    A[AI Assistant] --> B[MCP Server]
+    B --> C[HTTP Bridge]
+    C --> D[Fusion Add-In]
+    D --> E[Fusion 360 API]
+    
+    B --> F[FastMCP Protocol]
+    C --> G[Task Queue]
+    D --> H[Event Handler]
+```
 
-### Fusion Add-In (FusionMCPBridge/)
-- Runs inside Fusion 360
-- HTTP server on port 5001 that receives requests from MCP server
-- Because the Fusion API is not thread-safe, this uses:
-  - Custom event handler
-  - Task queue
-- Modules:
-  - `FusionMCPBridge.py` - HTTP routing and request handling
-  - `handlers/manufacture/` - MANUFACTURE workspace (CAM) functionality
-  - `tool_library.py` - Tool library management using Fusion 360 CAM API
+### Components
 
----
-### Why This Architecture?
+**MCP Server** (`Server/MCP_Server.py`)
+- FastMCP server implementation
+- CAM tool definitions and prompts
+- HTTP communication with Fusion add-in
 
-The Fusion 360 API is **not thread-safe** and requires all operations to run on the main UI thread. Our solution:
+**Fusion Add-In** (`FusionMCPBridge/`)
+- HTTP server on port 5001
+- Event-driven task queue (Fusion API is not thread-safe)
+- CAM operations and tool library management
 
-1. **Event-Driven Design** - Use Fusion's CustomEvent system
-2. **Task Queue** - Queue operations for sequential execution
-3. **Async Bridge** - HTTP server handles async MCP requests
+## Security Considerations
 
-   
-## Security Considerations 🔒
-- Local execution → safe by default
-- Currently HTTP (OK locally, insecure on networks)
-- Validate tool inputs to avoid prompt injection
-- Real security depends on tool implementation
+- **Local execution only** - safe by default
+- **HTTP communication** - secure for local use, insecure over networks
+- **Input validation** - validate tool inputs to prevent injection
+- **No authentication** - designed for local development use
 
----
+## Limitations
 
 ### This is NOT
-
-- ❌ A production-ready tool
-- ❌ A replacement for professional CAD software
-- ❌ Suitable for critical engineering work
+- ❌ Production-ready software
+- ❌ Replacement for professional CAM workflows
+- ❌ Suitable for critical manufacturing operations
 - ❌ Officially supported by Autodesk
 
 ### This IS
+- ✅ Proof-of-concept for conversational CAM
+- ✅ Educational project for AI-manufacturing integration
+- ✅ Tool for CAM workflow automation experiments
+- ✅ Research platform for AI-assisted manufacturing
 
-- ✅ A proof-of-concept
-- ✅ An educational project
-- ✅ A demonstration of MCP capabilities
-- ✅ A tool for rapid prototyping and learning
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes with appropriate tests
+4. Submit a pull request
+
+See development setup above for local testing workflow.
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/JustusBraitinger/FusionMCP/issues)
+- **Email**: justus@braitinger.org
+- **Documentation**: Check `docs/` directory for detailed guides
+
+## File Structure
+
+```
+FusionMCP/
+├── Server/                 # MCP server implementation
+├── FusionMCPBridge/       # Fusion 360 add-in
+├── docs/                  # Comprehensive documentation
+├── tests/                 # Test suites
+└── README.md             # This file
+```
+
+## License
+
+[MIT License](LICENSE)
 
 ---
 
-**This is a proof-of-concept, not production software.**
-
-
-# If you want it to build yourself   
-- Use Websocket instead of plain HTTP
-- Find a way to tell the llm the retarded faceindecies and body names
-- 
-
-
-
-## Contact
-justus@braitinger.org
+**⚠️ This is experimental software. Use at your own risk for non-critical applications.**

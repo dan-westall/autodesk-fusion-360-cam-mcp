@@ -141,5 +141,3 @@ Thumbs.db
 .kiro/settings/mcp.json
 .kiro/settings/
 .ruff_cache/
-
-.coderabbit.yaml

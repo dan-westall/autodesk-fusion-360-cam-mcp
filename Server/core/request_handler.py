@@ -58,6 +58,28 @@ def send_request(endpoint: str, data: Dict[str, Any], method: str = "POST") -> D
     Raises:
         requests.RequestException: If request fails after all retries
     """
+    import inspect
+    
+    # Get caller information for tracing
+    frame = None
+    caller_frame = None
+    caller_name = None
+    caller_file = None
+    
+    try:
+        frame = inspect.currentframe()
+        caller_frame = frame.f_back
+        caller_name = caller_frame.f_code.co_name
+        caller_file = caller_frame.f_code.co_filename.split('/')[-1]
+        
+        if interceptor.is_interceptor_enabled():
+            logger.info(f"[TRACE] {caller_file}:{caller_name}() -> send_request({method} {endpoint})")
+    finally:
+        if frame is not None:
+            del frame
+        if caller_frame is not None:
+            del caller_frame
+    
     max_retries = 3
     headers = get_headers()
     timeout = get_timeout()
@@ -92,7 +114,7 @@ def send_request(endpoint: str, data: Dict[str, Any], method: str = "POST") -> D
             if attempt == max_retries - 1:
                 return {
                     "error": True,
-                    "message": "Cannot connect to Fusion 360. Ensure the add-in is running.",
+                    "message": "Cannot connect to Fusion 360. Ensure the add-in is running and you are in the MANUFACTURE workspace.",
                     "code": "CONNECTION_ERROR"
                 }
                 
@@ -101,7 +123,7 @@ def send_request(endpoint: str, data: Dict[str, Any], method: str = "POST") -> D
             if attempt == max_retries - 1:
                 return {
                     "error": True,
-                    "message": "Request to Fusion 360 timed out. The add-in may be busy.",
+                    "message": "Request to Fusion 360 timed out. The add-in may be busy processing CAM operations.",
                     "code": "TIMEOUT_ERROR"
                 }
                 
@@ -116,6 +138,9 @@ def send_request(endpoint: str, data: Dict[str, Any], method: str = "POST") -> D
 
         except Exception as e:
             logger.error(f"Unexpected error on attempt {attempt + 1}: {e}")
+            logger.error(f"[DEBUG] method={method}, type(method)={type(method)}, endpoint={endpoint}")
+            if interceptor.is_interceptor_enabled():
+                logger.error(f"[TRACE] Called from {caller_file}:{caller_name}() with method={repr(method)}")
             if attempt == max_retries - 1:
                 return {
                     "error": True,

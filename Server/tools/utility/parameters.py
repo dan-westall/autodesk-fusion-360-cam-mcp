@@ -27,33 +27,32 @@ def register_tools(mcp_instance: FastMCP):
     mcp.tool()(change_parameter)
 
 def count():
-    """Zählt die Parameter im aktuellen Modell."""
+    """Count parameters in the current manufacturing model."""
     try:
         endpoint = get_endpoints("utility")["count_parameters"]
-        return send_request(endpoint, {}, {})
+        return send_request(endpoint, {})
     except Exception as e:
-        logging.error("Count failed: %s", e)
+        logging.exception("Count failed")
         raise
 
 def list_parameters():
-    """Listet alle Parameter im aktuellen Modell auf."""
+    """List all parameters in the current manufacturing model."""
     try:
         endpoint = get_endpoints("utility")["list_parameters"]
-        return send_request(endpoint, {}, {})
+        return send_request(endpoint, {})
     except Exception as e:
-        logging.error("List parameters failed: %s", e)
+        logging.exception("List parameters failed")
         raise
 
 def change_parameter(name: str, value: str):
-    """Ändert den Wert eines Parameters."""
+    """Change the value of a parameter in the manufacturing model."""
     try:
         endpoint = get_endpoints("utility")["change_parameter"]
         payload = {
             "name": name,
             "value": value
         }
-        headers = get_headers()
-        return send_request(endpoint, payload, headers)
+        return send_request(endpoint, payload)
     except Exception as e:
-        logging.error("Change parameter failed: %s", e)
+        logging.exception("Change parameter failed")
         raise

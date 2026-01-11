@@ -325,10 +325,11 @@ class ErrorHandler:
             ])
         
         # Add module-specific suggestions
-        if "design" in module_name:
-            suggestions.append("Ensure you're in the Design workspace")
-        elif "manufacture" in module_name:
+        if "manufacture" in module_name:
             suggestions.append("Ensure you're in the MANUFACTURE workspace")
+        elif category in [ErrorCategory.FUSION_API, ErrorCategory.TASK_EXECUTION]:
+            # Only suggest MANUFACTURE workspace for CAM-related error categories
+            suggestions.append("Ensure you're in the MANUFACTURE workspace for CAM operations")
         
         return suggestions
     

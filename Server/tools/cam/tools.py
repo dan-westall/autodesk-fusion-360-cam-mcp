@@ -31,7 +31,7 @@ def register_tools(mcp_instance: FastMCP):
     mcp.tool()(list_library_tools)
     mcp.tool()(get_tool_details)
 
-def list_cam_tools():
+def list_cam_tools() -> dict:
     """
     You can list all cutting tools available in the CAM tool libraries.
     
@@ -91,7 +91,7 @@ def list_cam_tools():
             "code": "UNKNOWN_ERROR"
         }
 
-def get_tool_info(tool_id: str):
+def get_tool_info(tool_id: str) -> dict:
     """
     You can get usage information about a specific cutting tool across all operations.
     
@@ -152,7 +152,7 @@ def get_tool_info(tool_id: str):
             "code": "UNKNOWN_ERROR"
         }
 
-def list_tool_libraries():
+def list_tool_libraries() -> dict:
     """
     List all accessible tool libraries in Fusion 360.
     
@@ -185,7 +185,7 @@ def list_tool_libraries():
             "code": "UNKNOWN_ERROR"
         }
 
-def list_library_tools(library_id: str):
+def list_library_tools(library_id: str) -> dict:
     """
     List all tools in a specific tool library.
     
@@ -216,7 +216,7 @@ def list_library_tools(library_id: str):
             "code": "UNKNOWN_ERROR"
         }
 
-def get_tool_details(tool_id: str):
+def get_tool_details(tool_id: str) -> dict:
     """
     Get detailed information about a specific cutting tool.
     

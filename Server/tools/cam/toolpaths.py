@@ -36,7 +36,7 @@ def register_tools(mcp_instance: FastMCP):
 #         "openWorldHint": False
 #     }
 # )
-def list_cam_toolpaths():
+def list_cam_toolpaths() -> dict:
     """
     You can list all CAM toolpath operations in the current Fusion 360 document.
     
@@ -96,7 +96,7 @@ def list_cam_toolpaths():
             "code": "UNKNOWN_ERROR"
         }
 
-def get_toolpath_details(toolpath_id: str):
+def get_toolpath_details(toolpath_id: str) -> dict:
     """
     You can get detailed parameters for a specific CAM toolpath operation.
     
@@ -170,7 +170,7 @@ def get_toolpath_details(toolpath_id: str):
             "code": "UNKNOWN_ERROR"
         }
 
-def list_toolpaths_with_heights():
+def list_toolpaths_with_heights() -> dict:
     """
     Sie können alle CAM-Werkzeugbahnen mit ihren Höhenparametern in einem einzigen Aufruf auflisten.
     
@@ -252,7 +252,7 @@ def list_toolpaths_with_heights():
             "code": "UNKNOWN_ERROR"
         }
 
-def analyze_toolpath_sequence(setup_id: str):
+def analyze_toolpath_sequence(setup_id: str) -> dict:
     """
     Sie können eine detaillierte Sequenzanalyse für alle Werkzeugbahnen in einem spezifischen CAM-Setup durchführen.
     

@@ -24,26 +24,26 @@ def register_tools(mcp_instance: FastMCP):
     mcp.tool()(export_step)
     mcp.tool()(export_stl)
 
-def export_step(name : str):
-    """Exportiert das Modell als STEP-Datei."""
+async def export_step(name : str):
+    """Export the manufacturing model as a STEP file."""
     try:
         endpoint = get_endpoints("utility")["export_step"]
         data = {
             "name": name
         }
-        return send_request(endpoint, data, {})
+        return send_request(endpoint, data)
     except Exception as e:
-        logging.error("Export STEP failed: %s", e)
+        logging.exception("Export STEP failed")
         raise
 
 def export_stl(name : str):
-    """Exportiert das Modell als STL-Datei."""
+    """Export the manufacturing model as an STL file."""
     try:
         endpoint = get_endpoints("utility")["export_stl"]
         data = {
             "name": name
         }
-        return send_request(endpoint, data, {})
+        return send_request(endpoint, data)
     except Exception as e:
         logging.error("Export STL failed: %s", e)
         raise

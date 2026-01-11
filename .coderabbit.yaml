@@ -1,0 +1,84 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+inheritance: true
+language: "en-GB"
+early_access: false
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+  tools:
+    ruff:
+      enabled: true
+  # Exclude generated files, caches, and internal directories
+  path_filters:
+    - '!.kiro/**'
+    - '!.amazonq/**'
+    - '!**/__pycache__/**'
+    - '!.pytest_cache/**'
+    - '!.ruff_cache/**'
+    - '!.venv/**'
+    - '!.hypothesis/**'
+    - '!uv.lock'
+    - '!**/*.pyc'
+    - '!.investigation/**'
+    - '!test_env/**'
+  # Project-specific path instructions
+  path_instructions:
+    - path: "Server/**/*.py"
+      instructions: |
+        MCP server implementation - Focus on:
+        - FastMCP tool definitions and proper error handling
+        - HTTP communication patterns with Fusion add-in
+        - CAM operation abstractions and data structures
+        - Thread safety considerations for Fusion API calls
+        - Proper async/await patterns for HTTP requests
+    - path: "FusionMCPBridge/**/*.py"
+      instructions: |
+        Fusion 360 add-in code - Focus on:
+        - Fusion 360 API usage patterns and best practices
+        - Event-driven task queue implementation (API is not thread-safe)
+        - CAM workspace operations and tool library management
+        - Error handling for manufacturing operations
+        - Proper resource cleanup and memory management
+    - path: "FusionMCPBridgeDebugger/**/*.py"
+      instructions: |
+        Debugging utilities for Fusion add-in - Focus on:
+        - Remote debugging capabilities and HTTP endpoints
+        - Safe add-in restart mechanisms
+        - Development workflow automation
+        - Error logging and diagnostic information
+    - path: "**/tests/**/*.py"
+      instructions: |
+        Test code - Ensure:
+        - Proper test structure and naming conventions
+        - Effective mocking strategies for Fusion API
+        - Clear separation between unit tests and integration tests
+        - Integration tests properly marked with @pytest.mark.integration
+        - Test isolation and cleanup
+    - path: "docs/**/*.md"
+      instructions: |
+        Documentation files - Use British English spelling and grammar:
+        - Use "colour" not "color", "realise" not "realize", "centre" not "center"
+        - Use British punctuation conventions (quotes, commas)
+        - Ensure technical accuracy and completeness
+        - Verify setup instructions are current and examples work
+        - Check for proper markdown formatting and structure
+    - path: "**/*.md"
+      instructions: |
+        General documentation - Check for:
+        - Accuracy and clarity of technical content
+        - Proper markdown formatting
+        - Working links and references
+        - Up-to-date installation and usage instructions
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: "auto"
+chat:
+  auto_reply: true

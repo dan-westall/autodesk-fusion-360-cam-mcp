@@ -119,3 +119,9 @@ markers = [
     "manufacture: marks tests requiring MANUFACTURE workspace",
     "design: marks tests requiring Design workspace",
 ]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.407",
+    "pytest>=9.0.2",
+]

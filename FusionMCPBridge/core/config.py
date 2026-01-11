@@ -7,7 +7,6 @@ from enum import Enum
 
 class WorkspaceCategory(Enum):
     """Fusion 360 workspace categories for organizing endpoints and configuration"""
-    DESIGN = "design"
     MANUFACTURE = "manufacture"
     RESEARCH = "research"
     SYSTEM = "system"
@@ -33,45 +32,6 @@ class ConfigurationManager:
         
         # Endpoints organized by Fusion 360 workspace categories
         self._endpoints = {
-            WorkspaceCategory.DESIGN: {
-                "geometry": {
-                    "box": "/Box",
-                    "cylinder": "/draw_cylinder", 
-                    "sphere": "/sphere",
-                    "circle": "/create_circle",
-                    "lines": "/draw_lines",
-                    "rectangle": "/draw_2d_rectangle"
-                },
-                "sketching": {
-                    "arc": "/arc",
-                    "spline": "/spline",
-                    "ellipse": "/ellipsis",
-                    "text": "/draw_text"
-                },
-                "modeling": {
-                    "extrude": "/extrude_last_sketch",
-                    "revolve": "/revolve",
-                    "loft": "/loft",
-                    "sweep": "/sweep",
-                    "boolean": "/boolean_operation"
-                },
-                "features": {
-                    "fillet": "/fillet_edges",
-                    "shell": "/shell_body",
-                    "holes": "/holes",
-                    "thread": "/threaded",
-                    "circular_pattern": "/circular_pattern",
-                    "rectangular_pattern": "/rectangular_pattern"
-                },
-                "utilities": {
-                    "export_step": "/Export_STEP",
-                    "export_stl": "/Export_STL",
-                    "parameters": "/set_parameter",
-                    "list_parameters": "/list_parameters",
-                    "count_parameters": "/count_parameters"
-                }
-            },
-            
             WorkspaceCategory.MANUFACTURE: {
                 "setups": {
                     "list": "/cam/setups",

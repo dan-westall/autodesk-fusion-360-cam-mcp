@@ -187,7 +187,7 @@ class TestSetPartPosition:
             "invalid" in str(content).lower() or
             "validation" in str(content).lower()
         )
-        assert is_error or response.status_code == 200, (
+        assert is_error, (
             f"Expected validation error for invalid coordinates: {data}"
         )
 

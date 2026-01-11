@@ -39,14 +39,14 @@ class TestHandlerInfo:
             name="test_handler",
             pattern="/test",
             handler_func=mock_handler,
-            category="design",
+            category="manufacture",  # Changed from design to manufacture
             methods=["GET", "POST"],
             dependencies=[]
         )
         
         assert handler.name == "test_handler"
         assert handler.pattern == "/test"
-        assert handler.category == "design"
+        assert handler.category == "manufacture"  # Changed from design to manufacture
         assert handler.methods == ["GET", "POST"]
 
 
@@ -57,7 +57,7 @@ class TestModuleInfo:
         """Test creating a ModuleInfo."""
         module = ModuleInfo(
             name="test_module",
-            category="design",
+            category="manufacture",  # Changed from design to manufacture
             handlers=[],
             loaded=True,
             dependencies=[],
@@ -65,7 +65,7 @@ class TestModuleInfo:
         )
         
         assert module.name == "test_module"
-        assert module.category == "design"
+        assert module.category == "manufacture"  # Changed from design to manufacture
         assert module.loaded is True
 
 
@@ -79,14 +79,12 @@ class TestModuleLoader:
         self.handlers_dir = self.temp_dir / "handlers"
         self.handlers_dir.mkdir(parents=True)
         
-        # Create category directories
-        (self.handlers_dir / "design").mkdir()
+        # Create category directories (design removed as part of CAD removal)
         (self.handlers_dir / "manufacture").mkdir()
         (self.handlers_dir / "system").mkdir()
         
         # Create __init__.py files
         (self.handlers_dir / "__init__.py").touch()
-        (self.handlers_dir / "design" / "__init__.py").touch()
         (self.handlers_dir / "manufacture" / "__init__.py").touch()
         (self.handlers_dir / "system" / "__init__.py").touch()
         
@@ -128,22 +126,22 @@ def handle_{name}(path, method, data):
     
     def test_discover_modules_with_handlers(self):
         """Test discovering handler modules."""
-        # Create test modules
-        self.create_test_handler_module("design", "geometry")
+        # Create test modules (design removed as part of CAD removal)
         self.create_test_handler_module("manufacture", "toolpaths")
+        self.create_test_handler_module("manufacture", "setups")
         
         modules = self.loader.discover_modules()
         
         assert len(modules) >= 2
-        assert any("geometry" in m for m in modules)
+        assert any("setups" in m for m in modules)
         assert any("toolpaths" in m for m in modules)
     
     def test_discover_modules_ignores_private_files(self):
         """Test that discovery ignores private files starting with underscore."""
-        # Create private file (starting with _)
-        (self.handlers_dir / "design" / "_private.py").write_text("# Private module")
+        # Create private file (starting with _) - using manufacture since design removed
+        (self.handlers_dir / "manufacture" / "_private.py").write_text("# Private module")
         # Also create a regular file to ensure discovery works
-        self.create_test_handler_module("design", "geometry")
+        self.create_test_handler_module("manufacture", "geometry")
         
         modules = self.loader.discover_modules()
         
@@ -155,8 +153,8 @@ def handle_{name}(path, method, data):
     def test_discover_modules_ignores_pycache(self):
         """Test that discovery ignores __pycache__ directories."""
         # Create __pycache__ directory with files
-        pycache_dir = self.handlers_dir / "design" / "__pycache__"
-        pycache_dir.mkdir()
+        pycache_dir = self.handlers_dir / "manufacture" / "__pycache__"
+        pycache_dir.mkdir(parents=True)
         (pycache_dir / "test.pyc").touch()
         
         modules = self.loader.discover_modules()
