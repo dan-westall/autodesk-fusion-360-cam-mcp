@@ -15,7 +15,6 @@ reviews:
   tools:
     ruff:
       enabled: true
-      config_file: "pyproject.toml"
   # Exclude generated files, caches, and internal directories
   path_filters:
     - '!.kiro/**'
