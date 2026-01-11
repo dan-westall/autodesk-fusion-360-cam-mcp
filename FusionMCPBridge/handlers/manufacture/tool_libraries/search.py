@@ -298,6 +298,19 @@ def _get_search_suggestions_impl(partial_query: str, suggestion_type: str, limit
     Returns:
         Search suggestions dictionary
     """
+    # Early guard for empty queries
+    if partial_query is None or partial_query.strip() == "":
+        return {
+            "partial_query": partial_query,
+            "suggestion_type": suggestion_type,
+            "suggestions": {
+                "names": [],
+                "types": [],
+                "materials": [],
+                "coatings": []
+            }
+        }
+    
     try:
         from ....tool_library import list_tools_in_libraries
         

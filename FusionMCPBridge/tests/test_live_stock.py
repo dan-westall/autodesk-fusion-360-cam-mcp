@@ -261,7 +261,7 @@ class TestStockDimensions:
             "invalid" in str(content).lower() or
             "negative" in str(content).lower()
         )
-        assert is_error or response.status_code == 200, (
+        assert is_error, (
             f"Expected validation error for negative dimensions: {data}"
         )
 

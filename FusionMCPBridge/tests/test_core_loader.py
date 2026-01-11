@@ -128,11 +128,12 @@ def handle_{name}(path, method, data):
         """Test discovering handler modules."""
         # Create test modules (design removed as part of CAD removal)
         self.create_test_handler_module("manufacture", "toolpaths")
+        self.create_test_handler_module("manufacture", "setups")
         
         modules = self.loader.discover_modules()
         
         assert len(modules) >= 2
-        assert any("geometry" in m for m in modules)
+        assert any("setups" in m for m in modules)
         assert any("toolpaths" in m for m in modules)
     
     def test_discover_modules_ignores_private_files(self):
@@ -140,7 +141,7 @@ def handle_{name}(path, method, data):
         # Create private file (starting with _) - using manufacture since design removed
         (self.handlers_dir / "manufacture" / "_private.py").write_text("# Private module")
         # Also create a regular file to ensure discovery works
-        self.create_test_handler_module("design", "geometry")
+        self.create_test_handler_module("manufacture", "geometry")
         
         modules = self.loader.discover_modules()
         
@@ -152,8 +153,8 @@ def handle_{name}(path, method, data):
     def test_discover_modules_ignores_pycache(self):
         """Test that discovery ignores __pycache__ directories."""
         # Create __pycache__ directory with files
-        pycache_dir = self.handlers_dir / "design" / "__pycache__"
-        pycache_dir.mkdir()
+        pycache_dir = self.handlers_dir / "manufacture" / "__pycache__"
+        pycache_dir.mkdir(parents=True)
         (pycache_dir / "test.pyc").touch()
         
         modules = self.loader.discover_modules()

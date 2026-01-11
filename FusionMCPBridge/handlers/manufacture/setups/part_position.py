@@ -165,17 +165,14 @@ def _normalize_vector(vector: list) -> list:
         vector: A 3D vector as a list [x, y, z]
         
     Returns:
-        Normalized unit vector, or [0.0, 0.0, 0.0] for near-zero vectors
+        Normalized unit vector
         
-    Note:
-        Near-zero vectors (length < 1e-10) return [0.0, 0.0, 0.0] which may
-        cause issues in downstream cross product or orientation calculations.
-        Callers should validate input vectors before use.
+    Raises:
+        ValueError: If vector length is near zero (< 1e-10)
     """
     length = math.sqrt(vector[0]**2 + vector[1]**2 + vector[2]**2)
     if length < 1e-10:
-        logger.warning(f"Near-zero vector provided: {vector}. This may cause issues in orientation calculations.")
-        return [0.0, 0.0, 0.0]
+        raise ValueError(f"Cannot normalize near-zero vector: {vector}")
     return [vector[0]/length, vector[1]/length, vector[2]/length]
 
 
@@ -239,8 +236,9 @@ def _extract_part_position(setup) -> dict:
                         "z_axis": [z_axis.x, z_axis.y, z_axis.z]
                     }
                     position_info["is_default"] = False
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.exception(f"Error getting position info from setup operation: {e}")
+                    # Continue with default values
         
         # Alternative: Try to get position from WCS
         if hasattr(setup, 'workCoordinateSystem') and setup.workCoordinateSystem:
@@ -315,8 +313,8 @@ def _get_operation_count(setup) -> int:
                 folder = setup.folders.item(folder_idx)
                 if hasattr(folder, 'operations') and folder.operations:
                     count += folder.operations.count
-    except Exception:
-        pass
+    except Exception as e:
+        logger.exception(f"Error counting operations in setup folders: {e}")
     return count
 
 

@@ -62,12 +62,16 @@ def send_request(endpoint: str, data: Dict[str, Any], method: str = "POST") -> D
     
     # Get caller information for tracing
     frame = inspect.currentframe()
-    caller_frame = frame.f_back
-    caller_name = caller_frame.f_code.co_name
-    caller_file = caller_frame.f_code.co_filename.split('/')[-1]
-    
-    if interceptor.is_interceptor_enabled():
-        logger.info(f"[TRACE] {caller_file}:{caller_name}() -> send_request({method} {endpoint})")
+    try:
+        caller_frame = frame.f_back
+        caller_name = caller_frame.f_code.co_name
+        caller_file = caller_frame.f_code.co_filename.split('/')[-1]
+        
+        if interceptor.is_interceptor_enabled():
+            logger.info(f"[TRACE] {caller_file}:{caller_name}() -> send_request({method} {endpoint})")
+    finally:
+        del frame
+        del caller_frame
     
     max_retries = 3
     headers = get_headers()

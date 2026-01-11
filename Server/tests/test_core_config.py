@@ -64,7 +64,6 @@ class TestConfigurationValues:
         """Test that endpoints has expected categories."""
         categories = get_categories()
         assert len(categories) > 0
-        assert "cad" in categories
         assert "cam" in categories
 
 
@@ -97,11 +96,6 @@ class TestGetFunctions:
     
     def test_get_endpoints_by_category(self):
         """Test get_endpoints returns category-specific endpoints."""
-        # Test with cad category
-        cad_endpoints = get_endpoints("cad")
-        assert isinstance(cad_endpoints, dict)
-        assert len(cad_endpoints) > 0
-        
         # Test with cam category
         cam_endpoints = get_endpoints("cam")
         assert isinstance(cam_endpoints, dict)
@@ -128,13 +122,6 @@ class TestEndpointStructure:
     """Test the structure of endpoints."""
     
     def test_cad_endpoints_exist(self):
-        """Test that CAD endpoints exist."""
-        endpoints = get_endpoints("cad")
-        assert "draw_cylinder" in endpoints
-        assert "draw_box" in endpoints
-        assert "extrude" in endpoints
-    
-    def test_cam_endpoints_exist(self):
         """Test that CAM endpoints exist."""
         endpoints = get_endpoints("cam")
         assert "cam_toolpaths" in endpoints
@@ -144,7 +131,6 @@ class TestEndpointStructure:
         """Test that utility endpoints exist."""
         endpoints = get_endpoints("utility")
         assert "test_connection" in endpoints
-        assert "undo" in endpoints
     
     def test_debug_endpoints_exist(self):
         """Test that debug category exists (may be empty)."""

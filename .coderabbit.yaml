@@ -79,7 +79,6 @@ reviews:
 knowledge_base:
   opt_out: false
   learnings:
-    enabled: true
-    max_items: 50
+    scope: "auto"
 chat:
   auto_reply: true

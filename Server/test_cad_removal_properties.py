@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Property-Based Test for Configuration Cleanup Completeness and Test Suite Cleanup
+Test Suite for Configuration Cleanup Completeness and Test Suite Cleanup
 
-This module contains property-based tests to validate that design workspace
+This module contains tests to validate that design workspace
 endpoints have been completely removed from the server configuration while
 preserving all CAM, utility, and system functionality. It also validates
 that the test suite has been cleaned up to remove design-related tests.
@@ -25,8 +25,6 @@ import os
 import glob
 import ast
 from typing import Dict, List, Any, Set
-from hypothesis import given, strategies as st, settings
-from hypothesis import HealthCheck
 
 # Add Server directory to path for imports
 server_path = os.path.join(os.path.dirname(__file__), "..")
@@ -92,11 +90,9 @@ EXPECTED_TEST_CATEGORIES = ['cam', 'manufacture', 'utility', 'system', 'core']
 
 
 class TestConfigurationCleanupCompleteness:
-    """Property-based tests for configuration cleanup completeness."""
+    """Tests for configuration cleanup completeness."""
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_no_design_endpoints_in_configuration(self, _):
+    def test_no_design_endpoints_in_configuration(self):
         """
         **Feature: cad-removal, Property 4: Configuration cleanup completeness**
         
@@ -119,8 +115,7 @@ class TestConfigurationCleanupCompleteness:
             f"These endpoints should have been removed during CAD removal process."
         )
     
-    @given(st.sampled_from(EXPECTED_CATEGORIES))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @pytest.mark.parametrize("expected_category", EXPECTED_CATEGORIES)
     def test_only_expected_categories_present(self, expected_category):
         """
         **Feature: cad-removal, Property 4: Configuration cleanup completeness**
@@ -148,8 +143,7 @@ class TestConfigurationCleanupCompleteness:
             f"Only CAM, utility, and debug categories should be present."
         )
     
-    @given(st.sampled_from(EXPECTED_CAM_PATTERNS))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @pytest.mark.parametrize("cam_pattern", EXPECTED_CAM_PATTERNS)
     def test_cam_endpoints_preserved_in_configuration(self, cam_pattern):
         """
         **Feature: cad-removal, Property 4: Configuration cleanup completeness**
@@ -172,8 +166,7 @@ class TestConfigurationCleanupCompleteness:
             f"Available CAM endpoints: {list(cam_endpoint_names)}"
         )
     
-    @given(st.sampled_from(EXPECTED_UTILITY_PATTERNS))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @pytest.mark.parametrize("utility_pattern", EXPECTED_UTILITY_PATTERNS)
     def test_utility_endpoints_preserved_in_configuration(self, utility_pattern):
         """
         **Feature: cad-removal, Property 4: Configuration cleanup completeness**
@@ -196,9 +189,7 @@ class TestConfigurationCleanupCompleteness:
             f"Available utility endpoints: {list(utility_endpoint_names)}"
         )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_configuration_validation_passes(self, _):
+    def test_configuration_validation_passes(self):
         """
         **Feature: cad-removal, Property 4: Configuration cleanup completeness**
         
@@ -216,9 +207,7 @@ class TestConfigurationCleanupCompleteness:
             "configuration errors or inconsistencies."
         )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_endpoint_urls_are_valid(self, _):
+    def test_endpoint_urls_are_valid(self):
         """
         **Feature: cad-removal, Property 4: Configuration cleanup completeness**
         
@@ -245,9 +234,7 @@ class TestConfigurationCleanupCompleteness:
                 f"Endpoint '{endpoint_name}' URL '{endpoint_url}' should have path after base URL"
             )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_configuration_completeness_comprehensive(self, _):
+    def test_configuration_completeness_comprehensive(self):
         """
         **Feature: cad-removal, Property 4: Configuration cleanup completeness**
         
@@ -293,11 +280,9 @@ class TestConfigurationCleanupCompleteness:
 
 
 class TestSuiteCleanupCompleteness:
-    """Property-based tests for test suite cleanup completeness."""
+    """Tests for test suite cleanup completeness."""
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_no_design_test_files_exist(self, _):
+    def test_no_design_test_files_exist(self):
         """
         **Feature: cad-removal, Property 5: Test suite cleanup completeness**
         
@@ -334,9 +319,7 @@ class TestSuiteCleanupCompleteness:
             f"These test files should have been deleted during CAD removal process."
         )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_no_design_test_patterns_in_remaining_files(self, _):
+    def test_no_design_test_patterns_in_remaining_files(self):
         """
         **Feature: cad-removal, Property 5: Test suite cleanup completeness**
         
@@ -357,8 +340,13 @@ class TestSuiteCleanupCompleteness:
                 test_files.extend(glob.glob(os.path.join(test_path, "test_*.py")))
         
         violations = []
+        skip_files = ['test_cad_removal_properties.py', 'test_http_endpoint_removal_completeness.py']
         
         for test_file in test_files:
+            # Skip files that intentionally contain forbidden patterns
+            if any(skip_file in test_file for skip_file in skip_files):
+                continue
+                
             try:
                 with open(test_file, 'r', encoding='utf-8') as f:
                     content = f.read()
@@ -376,8 +364,7 @@ class TestSuiteCleanupCompleteness:
             f"These patterns should have been removed or updated during CAD removal."
         )
     
-    @given(st.sampled_from(EXPECTED_TEST_CATEGORIES))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @pytest.mark.parametrize("expected_category", EXPECTED_TEST_CATEGORIES)
     def test_expected_test_categories_present(self, expected_category):
         """
         **Feature: cad-removal, Property 5: Test suite cleanup completeness**
@@ -416,9 +403,7 @@ class TestSuiteCleanupCompleteness:
             f"Essential functionality may not be properly tested after design test removal."
         )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_test_configuration_updated(self, _):
+    def test_test_configuration_updated(self):
         """
         **Feature: cad-removal, Property 5: Test suite cleanup completeness**
         
@@ -465,9 +450,7 @@ class TestSuiteCleanupCompleteness:
             f"Test configuration should have been updated to remove design endpoints."
         )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_test_suite_completeness_comprehensive(self, _):
+    def test_test_suite_completeness_comprehensive(self):
         """
         **Feature: cad-removal, Property 5: Test suite cleanup completeness**
         
@@ -530,11 +513,9 @@ class TestSuiteCleanupCompleteness:
 
 
 class TestDirectoryStructureCleanup:
-    """Property-based tests for directory structure cleanup."""
+    """Tests for directory structure cleanup."""
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_cad_directory_completely_removed(self, _):
+    def test_cad_directory_completely_removed(self):
         """
         **Feature: cad-removal, Property 7: Directory structure cleanup**
         
@@ -564,9 +545,7 @@ class TestDirectoryStructureCleanup:
                         f"All CAD directories should have been removed."
                     )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_design_handlers_directory_completely_removed(self, _):
+    def test_design_handlers_directory_completely_removed(self):
         """
         **Feature: cad-removal, Property 7: Directory structure cleanup**
         
@@ -596,9 +575,7 @@ class TestDirectoryStructureCleanup:
                         f"All design directories should have been removed."
                     )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_no_cad_related_files_in_filesystem(self, _):
+    def test_no_cad_related_files_in_filesystem(self):
         """
         **Feature: cad-removal, Property 7: Directory structure cleanup**
         
@@ -638,9 +615,7 @@ class TestDirectoryStructureCleanup:
             f"These files should have been completely removed during directory cleanup."
         )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_only_expected_directories_remain(self, _):
+    def test_only_expected_directories_remain(self):
         """
         **Feature: cad-removal, Property 7: Directory structure cleanup**
         
@@ -691,9 +666,7 @@ class TestDirectoryStructureCleanup:
                 f"Only manufacture, system, and research directories should remain."
             )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_no_empty_parent_directories_after_cleanup(self, _):
+    def test_no_empty_parent_directories_after_cleanup(self):
         """
         **Feature: cad-removal, Property 7: Directory structure cleanup**
         
@@ -741,9 +714,7 @@ class TestDirectoryStructureCleanup:
             f"Empty directories should be removed during directory structure cleanup."
         )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_directory_structure_cleanup_comprehensive(self, _):
+    def test_directory_structure_cleanup_comprehensive(self):
         """
         **Feature: cad-removal, Property 7: Directory structure cleanup**
         
@@ -829,11 +800,9 @@ class TestDirectoryStructureCleanup:
 
 
 class TestImportAndDependencyCleanup:
-    """Property-based tests for import and dependency cleanup."""
+    """Tests for import and dependency cleanup."""
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_no_design_module_imports_in_codebase(self, _):
+    def test_no_design_module_imports_in_codebase(self):
         """
         **Feature: cad-removal, Property 6: Import and dependency cleanup**
         
@@ -905,9 +874,7 @@ class TestImportAndDependencyCleanup:
             f"These import statements should have been removed or updated during CAD removal."
         )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_server_module_loading_excludes_design_modules(self, _):
+    def test_server_module_loading_excludes_design_modules(self):
         """
         **Feature: cad-removal, Property 6: Import and dependency cleanup**
         
@@ -942,9 +909,7 @@ class TestImportAndDependencyCleanup:
             f"Module discovery should exclude all design-related modules."
         )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_server_startup_without_import_errors(self, _):
+    def test_server_startup_without_import_errors(self):
         """
         **Feature: cad-removal, Property 6: Import and dependency cleanup**
         
@@ -1006,9 +971,7 @@ class TestImportAndDependencyCleanup:
                 # Non-design related import errors might be acceptable (e.g., missing optional dependencies)
                 pass
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_fusion_addin_startup_without_design_handlers(self, _):
+    def test_fusion_addin_startup_without_design_handlers(self):
         """
         **Feature: cad-removal, Property 6: Import and dependency cleanup**
         
@@ -1069,9 +1032,7 @@ class TestImportAndDependencyCleanup:
                 # Non-design related import errors might be acceptable (e.g., missing adsk module)
                 pass
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_no_broken_dependencies_in_remaining_modules(self, _):
+    def test_no_broken_dependencies_in_remaining_modules(self):
         """
         **Feature: cad-removal, Property 6: Import and dependency cleanup**
         
@@ -1141,9 +1102,7 @@ class TestImportAndDependencyCleanup:
             f"These references to removed design modules should be updated or removed."
         )
     
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture], deadline=None)
-    def test_import_dependency_cleanup_comprehensive(self, _):
+    def test_import_dependency_cleanup_comprehensive(self):
         """
         **Feature: cad-removal, Property 6: Import and dependency cleanup**
         
@@ -1231,12 +1190,12 @@ class TestImportAndDependencyCleanup:
 
 
 if __name__ == "__main__":
-    # Run the property-based tests
+    # Run the tests
     pytest.main([__file__, "-v", "--tb=short"])
 
 class TestErrorMessageCleanup:
     """
-    Property-Based Test for Error Message Cleanup
+    Test Suite for Error Message Cleanup
     
     This test class validates that error messages and help text have been
     updated to reflect the manufacturing-only scope after CAD removal.
@@ -1271,9 +1230,7 @@ class TestErrorMessageCleanup:
         'machining', 'cutting tool', 'feed rate', 'spindle speed'
     ]
 
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_no_design_references_in_error_messages(self, _):
+    def test_no_design_references_in_error_messages(self):
         """
         **Feature: cad-removal, Property 9: Error message cleanup**
         
@@ -1304,9 +1261,7 @@ class TestErrorMessageCleanup:
             f"{design_references}. All error messages should focus on manufacturing capabilities only."
         )
 
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_manufacturing_focus_in_help_text(self, _):
+    def test_manufacturing_focus_in_help_text(self):
         """
         **Feature: cad-removal, Property 9: Error message cleanup**
         
@@ -1356,9 +1311,7 @@ class TestErrorMessageCleanup:
                 f"Expected at least 30% to have manufacturing focus."
             )
 
-    @given(st.just(None))
-    @settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_error_codes_reflect_manufacturing_scope(self, _):
+    def test_error_codes_reflect_manufacturing_scope(self):
         """
         **Feature: cad-removal, Property 9: Error message cleanup**
         

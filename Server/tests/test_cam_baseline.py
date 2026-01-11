@@ -21,7 +21,7 @@ Requirements: 9.1, 9.2, 9.3, 9.4, 9.5
 import pytest
 import json
 import logging
-from typing import Dict, List, Any, Callable
+from typing import Dict, List, Any, Callable, Optional
 from datetime import datetime
 import os
 
@@ -76,7 +76,7 @@ class CAMBaselineUtils:
         }
     
     @staticmethod
-    def test_function_response_structure(func: Callable, test_args: Dict[str, Any] = None) -> Dict[str, Any]:
+    def test_function_response_structure(func: Callable, test_args: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Test a function and analyze its response structure."""
         try:
             if test_args:
@@ -321,6 +321,7 @@ class TestCAMFunctionalityBaseline:
         
         assert len(signatures) == 2, f"Expected 2 linking functions, found {len(signatures)}"
     
+    @pytest.mark.integration
     def test_cam_function_response_structures(self):
         """Test response structures of key CAM functions."""
         # Test functions that don't require parameters
@@ -347,7 +348,7 @@ class TestCAMFunctionalityBaseline:
         if not successful_tests:
             pytest.skip("No CAM functions succeeded - Fusion 360 may not be available")
     
-    def test_generate_comprehensive_baseline_report(self):
+    def test_generate_comprehensive_baseline_report(self, tmp_path):
         """Generate and save comprehensive CAM baseline report."""
         report = CAMBaselineUtils.create_cam_baseline_report()
         
@@ -366,15 +367,15 @@ class TestCAMFunctionalityBaseline:
         assert report['summary']['total_functions'] > 0
         assert len(report['summary']['categories']) > 0
         
-        # Save report for future comparison
-        baseline_path = "Server/tests/cam_baseline_report.json"
-        CAMBaselineUtils.save_baseline_report(report, baseline_path)
+        # Save report to temp path
+        baseline_path = tmp_path / "cam_baseline_report.json"
+        CAMBaselineUtils.save_baseline_report(report, str(baseline_path))
         
         # Verify file was created
-        assert os.path.exists(baseline_path), "Baseline report file should be created"
+        assert baseline_path.exists(), "Baseline report file should be created"
         
         # Verify file can be loaded
-        loaded_report = CAMBaselineUtils.load_baseline_report(baseline_path)
+        loaded_report = CAMBaselineUtils.load_baseline_report(str(baseline_path))
         assert loaded_report['summary']['total_functions'] == report['summary']['total_functions']
 
 
