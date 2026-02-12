@@ -6,8 +6,13 @@ This is the main entry point for the modular Fusion 360 MCP Server.
 It delegates all functionality to the core modular components while
 maintaining the same FastMCP interface and command-line arguments.
 
-The server automatically discovers and loads tool modules, registers
-tools and prompts, and provides comprehensive error handling.
+Architecture:
+- Tools: Automatically discovered and registered via @mcp.tool() decorators
+- Prompts: Automatically registered via @mcp.prompt() decorators during import
+- Modules: Dynamically loaded from tools/ directory with graceful error handling
+
+The server uses FastMCP's native decorator-based registration system,
+eliminating the need for custom registry classes or manual registration logic.
 """
 
 import os
@@ -22,6 +27,7 @@ os.environ['NO_PROXY'] = 'localhost,127.0.0.1'
 os.environ['no_proxy'] = 'localhost,127.0.0.1'
 
 # Import core components
+# ruff: noqa: E402 - imports after environment setup is intentional
 from core.server import create_server
 from core.loader import (
     set_mcp_instance, 
@@ -32,10 +38,12 @@ from core.loader import (
 )
 from core.config import validate_configuration
 from core.request_handler import initialize_request_handler
-from prompts.registry import get_prompt_registry
 
-# Import templates to ensure prompts are registered
-from prompts import templates
+# Import prompts module to trigger automatic decorator registration
+# When this module is imported, Python executes the @mcp.prompt() decorators
+# in templates.py, which automatically register all prompt templates with the
+# FastMCP server instance. No manual registration is required.
+from prompts import templates  # noqa: F401 - imported for side effects
 
 # Configure logging - write to file for stdio debugging
 LOG_FILE = os.path.join(os.path.dirname(__file__), 'mcp_server.log')
@@ -58,9 +66,15 @@ def initialize_server():
     1. Validates configuration
     2. Creates the FastMCP server instance
     3. Initializes the request handler
-    4. Loads all tool and prompt modules
-    5. Registers tools and prompts with MCP
-    6. Provides comprehensive error reporting
+    4. Loads all tool modules (tools are auto-registered via @mcp.tool() decorators)
+    5. Provides comprehensive error reporting
+    
+    Automatic Prompt Registration:
+    Prompts are automatically registered when the prompts.templates module is
+    imported at the top of this file. Python executes the @mcp.prompt() decorators
+    during module import, which registers all prompt templates with the FastMCP
+    server instance. This decorator-based approach eliminates the need for manual
+    prompt registration or custom registry systems.
     
     Returns:
         FastMCP: Configured server instance ready to run
@@ -101,13 +115,8 @@ def initialize_server():
         
         logger.info(f"✓ Module loading complete: {len(successful_modules)} successful, {len(failed_modules)} failed")
         
-        # Step 6: Register prompts with MCP
-        logger.info("Step 6: Registering prompts with MCP...")
-        register_prompts_with_mcp(mcp)
-        logger.info("✓ Prompts registered with MCP")
-        
-        # Step 7: Health check and error reporting
-        logger.info("Step 7: Performing health check...")
+        # Step 6: Health check and error reporting
+        logger.info("Step 6: Performing health check...")
         health_status = get_health_status()
         logger.info(f"✓ System health: {health_status['health']}")
         
@@ -122,7 +131,7 @@ def initialize_server():
                 for suggestion in error_report['suggestions']:
                     logger.warning(f"  - {suggestion}")
         
-        # Step 8: Log final statistics
+        # Step 7: Log final statistics
         logger.info("=== Server Initialization Complete ===")
         logger.info(f"Loaded modules: {health_status['loaded_modules']}")
         logger.info(f"Failed modules: {health_status['failed_modules']}")
@@ -135,40 +144,6 @@ def initialize_server():
         logger.error(f"Critical error during server initialization: {e}")
         logger.error("Server initialization failed")
         sys.exit(1)
-
-
-def register_prompts_with_mcp(mcp):
-    """
-    Register all prompts from the registry with the MCP server.
-    
-    Args:
-        mcp: FastMCP server instance
-    """
-    try:
-        registry = get_prompt_registry()
-        
-        for prompt_name in registry.list_prompts():
-            prompt_info = registry.get_prompt_info(prompt_name)
-            if prompt_info:
-                # Create dynamic prompt function
-                def create_prompt_function(name, info):
-                    def prompt_function():
-                        return registry.get_prompt(name)
-                    prompt_function.__name__ = name
-                    prompt_function.__doc__ = info.description
-                    return prompt_function
-                
-                # Register with MCP
-                prompt_func = create_prompt_function(prompt_name, prompt_info)
-                mcp.prompt()(prompt_func)
-                logger.debug(f"Registered MCP prompt: {prompt_name}")
-                
-        logger.info(f"Registered {len(registry.list_prompts())} prompts with MCP")
-        
-    except Exception as e:
-        logger.error(f"Failed to register prompts with MCP: {e}")
-        # Don't fail server startup for prompt registration issues
-        logger.warning("Continuing server startup without prompts")
 
 
 def main():

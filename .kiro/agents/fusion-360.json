@@ -7,7 +7,7 @@
       "command": "uv",
       "args": [
         "--directory",
-        "/Users/bsport/projects/fustion360-mcp/Autodesk-Fusion-360-MCP-Server",
+        "/Users/bsport/projects/fustion360-mcp/autodesk-fusion-360-cam-mcp",
         "run",
         "python3",
         "Server/MCP_Server.py",
