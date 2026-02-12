@@ -3,29 +3,15 @@ FastMCP server initialization and configuration.
 
 This module handles the creation and setup of the FastMCP server instance,
 including server instructions and basic configuration.
+
+The mcp instance is created at module level so it can be imported by other
+modules that need to use decorators (@mcp.tool(), @mcp.prompt()).
 """
 
 import logging
 from mcp.server.fastmcp import FastMCP
 
 logger = logging.getLogger(__name__)
-
-
-def create_server() -> FastMCP:
-    """
-    Creates and configures the FastMCP server instance.
-    
-    Returns:
-        FastMCP: Configured server instance
-    """
-    logger.info("Creating FastMCP server instance")
-    
-    instructions = setup_instructions()
-    
-    mcp = FastMCP("Fusion", instructions=instructions)
-    
-    logger.info("FastMCP server instance created successfully")
-    return mcp
 
 
 def setup_instructions() -> str:
@@ -109,3 +95,24 @@ def setup_instructions() -> str:
                 """
     
     return instructions
+
+
+# Create the FastMCP instance at module level
+# This allows other modules to import and use decorators
+logger.info("Creating FastMCP server instance at module level")
+mcp = FastMCP("Fusion", instructions=setup_instructions())
+logger.info("FastMCP server instance created successfully")
+
+
+def create_server() -> FastMCP:
+    """
+    Returns the FastMCP server instance.
+    
+    The instance is created at module level to allow decorator usage.
+    This function is kept for backward compatibility with existing code.
+    
+    Returns:
+        FastMCP: The module-level server instance
+    """
+    logger.info("Returning module-level FastMCP server instance")
+    return mcp
